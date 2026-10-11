@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-heading: 'Bebas Neue', sans-serif;
+    --font-grunge: 'Permanent Marker', cursive;
+    --font-tech: 'Space Grotesk', sans-serif;
+  }
+
+  body {
+    background-color: #050505;
+    color: #e5e5e5;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom fonts */
+.font-bebas {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.font-grunge {
+  font-family: 'Permanent Marker', cursive;
+}
+
+.font-tech {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Custom dark rock scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #7f1d1d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
+
+/* Rock noise & grunge overlay */
+.bg-noise {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.grunge-vignette {
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.95);
+}
+
+/* Red neon glow */
+.glow-red {
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.45);
+}
+
+.glow-red-lg {
+  box-shadow: 0 0 50px rgba(185, 28, 28, 0.6);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+}
+
+/* Distorted glitch effect */
+@keyframes glitch-anim {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 2px) }
+  40% { transform: translate(-2px, -2px) }
+  60% { transform: translate(2px, 2px) }
+  80% { transform: translate(2px, -2px) }
+  100% { transform: translate(0) }
+}
+
+.animate-glitch:hover {
+  animation: glitch-anim 0.25s infinite;
+}
+
+/* Stompbox button animation */
+.stompbox-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
