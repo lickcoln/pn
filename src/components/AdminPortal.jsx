@@ -26,9 +26,15 @@ import {
   ExternalLink,
   Sliders,
   Sparkles,
-  Flame
+  Flame,
+  Inbox,
+  Cloud,
+  CloudOff,
+  LoaderCircle,
+  RefreshCw
 } from 'lucide-react'
 import { useBandData } from '../context/BandDataContext'
+import { listBookingInquiries, listTicketRsvps } from '../lib/supabase'
 
 export default function AdminPortal() {
   const {
@@ -44,12 +50,25 @@ export default function AdminPortal() {
     updateMerch,
     updateContact,
     resetToDefaults,
-    importConfig
+    importConfig,
+    remoteStatus,
+    adminUser,
+    syncState,
+    adminLogin,
+    adminLogout,
+    retryPublish
   } = useBandData()
 
-  const [isAdmin, setIsAdmin] = useState(() => {
+  const [legacyAdmin, setLegacyAdmin] = useState(() => {
     return sessionStorage.getItem('pn_admin_session') === 'true'
   })
+  // Once supabase-admin.sql has been applied ('ready'), admin means a Supabase admin session;
+  // before that, the local-only login below keeps working
+  const usesSupabaseLogin = remoteStatus === 'ready'
+  const isAdmin = usesSupabaseLogin ? Boolean(adminUser) : legacyAdmin
+  const loginHint = remoteStatus === 'loading'
+    ? 'Menghubungkan ke server...'
+    : usesSupabaseLogin ? 'Akun admin Supabase' : null
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [activeTab, setActiveTab] = useState('theme')
@@ -58,6 +77,7 @@ export default function AdminPortal() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
+  const [loggingIn, setLoggingIn] = useState(false)
 
   // Temporary edit states
   const [heroForm, setHeroForm] = useState(config.hero)
@@ -96,8 +116,11 @@ export default function AdminPortal() {
   })
   const [showAddMerch, setShowAddMerch] = useState(false)
 
-  // Fan RSVPs stored in localStorage
+  // Fan RSVPs and booking inquiries: read from Supabase for a Supabase admin, otherwise from
+  // the localStorage fallback of this browser
   const [rsvpsList, setRsvpsList] = useState([])
+  const [bookingsList, setBookingsList] = useState([])
+  const [inboxError, setInboxError] = useState('')
 
   // Keep local forms in sync when config updates
   useEffect(() => {
@@ -126,30 +149,58 @@ export default function AdminPortal() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isAdmin])
 
-  // Load RSVPs
-  const loadRsvps = () => {
+  // Load RSVPs and booking inquiries
+  const loadSubmissions = async (fetchRemote, localKey, setList) => {
+    setInboxError('')
+    if (usesSupabaseLogin) {
+      const result = await fetchRemote()
+      setList(result.data)
+      if (!result.success) setInboxError(result.error)
+      return
+    }
     try {
-      const data = JSON.parse(localStorage.getItem('pn_rsvps') || '[]')
-      setRsvpsList(data)
+      setList(JSON.parse(localStorage.getItem(localKey) || '[]'))
     } catch {
-      setRsvpsList([])
+      setList([])
     }
   }
+
+  const loadRsvps = () => loadSubmissions(listTicketRsvps, 'pn_rsvps', setRsvpsList)
+  const loadBookings = () => loadSubmissions(listBookingInquiries, 'pn_bookings', setBookingsList)
 
   useEffect(() => {
     if (activeTab === 'rsvps') {
       loadRsvps()
     }
+    if (activeTab === 'bookings') {
+      loadBookings()
+    }
   }, [activeTab])
 
   // Handle Login Authentication
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     setLoginError('')
 
+    if (usesSupabaseLogin) {
+      setLoggingIn(true)
+      const result = await adminLogin(username.trim(), password)
+      setLoggingIn(false)
+      if (result.success) {
+        setShowLoginModal(false)
+        setShowDashboard(true)
+        setUsername('')
+        setPassword('')
+      } else {
+        setLoginError(result.error)
+      }
+      return
+    }
+
+    // Local-only login, used until the shared content table exists (supabase-admin.sql)
     // Exact credentials requested by user
     if (username.trim() === 'paranoidnoise' && password.trim() === 'pn2026') {
-      setIsAdmin(true)
+      setLegacyAdmin(true)
       sessionStorage.setItem('pn_admin_session', 'true')
       setShowLoginModal(false)
       setShowDashboard(true)
@@ -161,8 +212,9 @@ export default function AdminPortal() {
   }
 
   const handleLogout = () => {
-    setIsAdmin(false)
+    setLegacyAdmin(false)
     sessionStorage.removeItem('pn_admin_session')
+    if (usesSupabaseLogin) adminLogout()
     setShowDashboard(false)
   }
 
@@ -400,17 +452,17 @@ export default function AdminPortal() {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                    Username
+                    {usesSupabaseLogin ? 'Email' : 'Username'}
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
-                      type="text"
+                      type={usesSupabaseLogin ? 'email' : 'text'}
                       required
                       autoFocus
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Masukkan username"
+                      placeholder={usesSupabaseLogin ? 'Masukkan email admin' : 'Masukkan username'}
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                     />
                   </div>
@@ -435,14 +487,15 @@ export default function AdminPortal() {
 
                 <div className="pt-2 flex items-center justify-between">
                   <span className="text-[11px] font-tech text-neutral-500">
-                    Akses: <code>paranoidnoise</code>
+                    {loginHint ?? <>Akses: <code>paranoidnoise</code></>}
                   </span>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-red-950/60"
+                    disabled={remoteStatus === 'loading' || loggingIn}
+                    className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-red-950/60"
                   >
                     <Unlock className="w-3.5 h-3.5" />
-                    <span>Masuk Administrator</span>
+                    <span>{loggingIn ? 'Memeriksa...' : 'Masuk Administrator'}</span>
                   </button>
                 </div>
               </form>
@@ -453,7 +506,7 @@ export default function AdminPortal() {
 
       {/* 3. Admin CMS Control Panel (Full Dashboard Modal) */}
       <AnimatePresence>
-        {showDashboard && (
+        {showDashboard && isAdmin && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-lg">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -477,7 +530,7 @@ export default function AdminPortal() {
                       </span>
                     </div>
                     <span className="text-xs font-tech text-neutral-400">
-                      Login sebagai: <strong className="text-neutral-200">paranoidnoise</strong> &bull; Ubah tampilan, informasi, dan tema live.
+                      Login sebagai: <strong className="text-neutral-200">{usesSupabaseLogin ? adminUser?.email : 'paranoidnoise'}</strong> &bull; Ubah tampilan, informasi, dan tema live.
                     </span>
                   </div>
                 </div>
@@ -509,6 +562,45 @@ export default function AdminPortal() {
                   <button onClick={() => setSaveNotification('')} className="text-green-400 hover:text-white">
                     <X className="w-3.5 h-3.5" />
                   </button>
+                </div>
+              )}
+
+              {/* Where edits go: shared with every visitor (Supabase) or this browser only */}
+              {usesSupabaseLogin ? (
+                <div className={`border-b px-6 py-2 text-xs font-tech flex items-center justify-between gap-3 shrink-0 ${
+                  syncState.status === 'error'
+                    ? 'bg-red-950/70 border-red-900 text-red-200'
+                    : syncState.status === 'saved'
+                      ? 'bg-green-950/50 border-green-900 text-green-300'
+                      : 'bg-neutral-900 border-neutral-800 text-neutral-300'
+                }`}>
+                  <span className="flex items-center gap-2">
+                    {syncState.status === 'saving' ? (
+                      <LoaderCircle className="w-4 h-4 animate-spin" />
+                    ) : syncState.status === 'error' ? (
+                      <CloudOff className="w-4 h-4" />
+                    ) : (
+                      <Cloud className="w-4 h-4" />
+                    )}
+                    {syncState.status === 'saving' && 'Menyimpan ke server...'}
+                    {syncState.status === 'saved' && 'Tersimpan di server dan langsung terlihat oleh semua pengunjung.'}
+                    {syncState.status === 'error' && `Gagal menyimpan ke server: ${syncState.error}`}
+                    {syncState.status === 'idle' && 'Terhubung ke server: perubahan otomatis tersimpan dan terlihat oleh semua pengunjung.'}
+                  </span>
+                  {syncState.status === 'error' && (
+                    <button
+                      onClick={retryPublish}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-bold uppercase shrink-0"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Coba lagi
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="border-b px-6 py-2 text-xs font-tech flex items-center gap-2 shrink-0 bg-amber-950/50 border-amber-900 text-amber-300">
+                  <CloudOff className="w-4 h-4 shrink-0" />
+                  Mode lokal: perubahan hanya tersimpan di browser ini dan tidak terlihat oleh pengunjung lain.
                 </div>
               )}
 
@@ -565,6 +657,16 @@ export default function AdminPortal() {
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Data Tiket RSVP</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('bookings')}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-tech font-bold uppercase tracking-wider transition-colors shrink-0 text-left ${
+                      activeTab === 'bookings' ? 'bg-red-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+                    }`}
+                  >
+                    <Inbox className="w-4 h-4" />
+                    <span>Data Booking Gig</span>
                   </button>
 
                   <button
@@ -1088,6 +1190,13 @@ export default function AdminPortal() {
                         </button>
                       </div>
 
+                      {inboxError && (
+                        <div className="p-3 rounded-xl bg-red-950/70 border border-red-700/80 text-xs font-tech text-red-200 flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                          <span>Gagal memuat data dari server: {inboxError}</span>
+                        </div>
+                      )}
+
                       {rsvpsList.length === 0 ? (
                         <div className="text-center py-12 text-neutral-500 font-tech">
                           <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
@@ -1096,7 +1205,7 @@ export default function AdminPortal() {
                       ) : (
                         <div className="space-y-3">
                           {rsvpsList.map((rsvp, idx) => (
-                            <div key={idx} className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 text-xs font-tech space-y-1">
+                            <div key={rsvp.id ?? idx} className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 text-xs font-tech space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-white text-sm">{rsvp.fan_name}</span>
                                 <span className="text-red-400 font-bold">{rsvp.ticket_count} Tiket</span>
@@ -1112,6 +1221,69 @@ export default function AdminPortal() {
                               {rsvp.notes && (
                                 <div className="text-neutral-500 italic pt-1">
                                   Catatan: "{rsvp.notes}"
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 5b: BOOKING INQUIRIES */}
+                  {activeTab === 'bookings' && (
+                    <div className="space-y-6 max-w-4xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-bebas text-3xl text-white tracking-wide">
+                            PENGAJUAN BOOKING DARI PROMOTOR / EO
+                          </h4>
+                          <p className="text-xs font-tech text-neutral-400">
+                            Pengajuan booking panggung yang masuk lewat formulir di website.
+                          </p>
+                        </div>
+                        <button
+                          onClick={loadBookings}
+                          className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs font-tech text-neutral-200"
+                        >
+                          Refresh Data
+                        </button>
+                      </div>
+
+                      {inboxError && (
+                        <div className="p-3 rounded-xl bg-red-950/70 border border-red-700/80 text-xs font-tech text-red-200 flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                          <span>Gagal memuat data dari server: {inboxError}</span>
+                        </div>
+                      )}
+
+                      {bookingsList.length === 0 ? (
+                        <div className="text-center py-12 text-neutral-500 font-tech">
+                          <Inbox className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                          <p className="text-sm">Belum ada pengajuan booking dari promotor / EO.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {bookingsList.map((booking, idx) => (
+                            <div key={booking.id ?? idx} className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 text-xs font-tech space-y-1">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-bold text-white text-sm">{booking.event_name}</span>
+                                <span className="text-red-400 font-bold shrink-0">{booking.event_date}</span>
+                              </div>
+                              <div className="text-neutral-400">
+                                Penyelenggara: <strong className="text-neutral-200">{booking.organizer_name}</strong>
+                                {' '}&bull; {booking.city}{booking.venue ? `, ${booking.venue}` : ''}
+                              </div>
+                              <div className="text-neutral-400 flex flex-wrap gap-4 pt-1">
+                                <span>No. WA: <strong>{booking.phone}</strong></span>
+                                <span>Email: <strong>{booking.email}</strong></span>
+                                {booking.event_type && <span>Jenis: {booking.event_type}</span>}
+                                {booking.budget_estimate && <span>Budget: {booking.budget_estimate}</span>}
+                                <span>Tgl: {new Date(booking.created_at).toLocaleString('id-ID')}</span>
+                              </div>
+                              {booking.message && (
+                                <div className="text-neutral-500 italic pt-1">
+                                  Pesan: "{booking.message}"
                                 </div>
                               )}
                             </div>

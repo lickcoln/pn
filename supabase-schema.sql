@@ -1,5 +1,6 @@
 -- Paranoid Noise Database Schema for Supabase
 -- Run this script in the Supabase SQL Editor if you want to store bookings & ticket RSVPs in Supabase
+-- Next (optional): run supabase-admin.sql for shared site content and admin access to these tables.
 
 -- 1. Table for Band Booking Inquiries
 CREATE TABLE IF NOT EXISTS booking_inquiries (

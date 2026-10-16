@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import {
   BAND_BIO,
   BAND_MEMBERS,
@@ -7,7 +7,16 @@ import {
   MERCH_ITEMS,
   BAND_CONTACT
 } from '../data/bandData'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import {
+  isSupabaseConfigured,
+  supabase,
+  isAdminUser,
+  fetchSiteContent,
+  saveSiteContent,
+  deleteSiteContent,
+  adminSignIn,
+  adminSignOut
+} from '../lib/supabase'
 
 export const THEME_PRESETS = {
   crimson: {
@@ -98,27 +107,66 @@ const DEFAULT_CONFIG = {
   contact: BAND_CONTACT
 }
 
+// Where config lives in this browser. LOCAL_KEY holds admin edits while there is no shared content;
+// it is only written after an admin edit, never on load, so a visitor never freezes a snapshot that
+// would shadow later deploys of bandData.js. CACHE_KEY remembers the last shared content fetched
+// from Supabase so returning visitors get a fast first paint.
+const LOCAL_KEY = 'pn_live_band_config'
+const CACHE_KEY = 'pn_site_content_cache'
+const PUBLISH_DELAY_MS = 700
+
+// Saved or published content may predate newer fields, so fill the gaps from the defaults
+function mergeConfig(saved) {
+  return {
+    ...DEFAULT_CONFIG,
+    ...saved,
+    theme: { ...DEFAULT_CONFIG.theme, ...(saved.theme || {}) },
+    hero: { ...DEFAULT_CONFIG.hero, ...(saved.hero || {}) },
+    contact: { ...DEFAULT_CONFIG.contact, ...(saved.contact || {}) }
+  }
+}
+
+function readStored(key) {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? mergeConfig(JSON.parse(raw)) : null
+  } catch (e) {
+    console.warn('Failed to parse saved band config:', e)
+    return null
+  }
+}
+
+function writeStored(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e)
+  }
+}
+
+function removeStored(key) {
+  try {
+    localStorage.removeItem(key)
+  } catch (e) {
+    console.error('Failed to clear localStorage:', e)
+  }
+}
+
 const BandDataContext = createContext(null)
 
 export function BandDataProvider({ children }) {
-  const [config, setConfig] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pn_live_band_config')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        return {
-          ...DEFAULT_CONFIG,
-          ...parsed,
-          theme: { ...DEFAULT_CONFIG.theme, ...(parsed.theme || {}) },
-          hero: { ...DEFAULT_CONFIG.hero, ...(parsed.hero || {}) },
-          contact: { ...DEFAULT_CONFIG.contact, ...(parsed.contact || {}) }
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to parse saved band config:', e)
-    }
-    return DEFAULT_CONFIG
-  })
+  const [config, setConfig] = useState(
+    () => (isSupabaseConfigured && readStored(CACHE_KEY)) || readStored(LOCAL_KEY) || DEFAULT_CONFIG
+  )
+  // 'off': no Supabase env | 'loading': checking site_content | 'ready': shared content is active
+  // | 'unavailable': unreachable, or supabase-admin.sql not run yet (admin edits stay in this browser)
+  const [remoteStatus, setRemoteStatus] = useState(isSupabaseConfigured ? 'loading' : 'off')
+  const [adminUser, setAdminUser] = useState(null)
+  const [syncState, setSyncState] = useState({ status: 'idle', error: '' })
+
+  // Latest config, so edits made in the same tick build on each other, and the pending publish
+  const configRef = useRef(config)
+  const publishTimer = useRef(null)
 
   // Apply theme accent color dynamically to CSS root variables
   useEffect(() => {
@@ -127,72 +175,141 @@ export function BandDataProvider({ children }) {
     root.style.setProperty('--primary-rock', preset.primaryColor)
     root.style.setProperty('--primary-rock-hover', preset.primaryHover)
     root.style.setProperty('--primary-rock-glow', preset.glowColor)
+  }, [config.theme.preset])
 
-    try {
-      localStorage.setItem('pn_live_band_config', JSON.stringify(config))
-    } catch (e) {
-      console.error('Failed to save to localStorage:', e)
+  // Shared content from Supabase wins over local copies once the site_content table exists
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    let cancelled = false
+
+    fetchSiteContent().then(({ status, config: remote }) => {
+      if (cancelled) return
+      setRemoteStatus(status)
+      if (status !== 'ready') return
+
+      const next = remote ? mergeConfig(remote) : DEFAULT_CONFIG
+      configRef.current = next
+      setConfig(next)
+      if (remote) writeStored(CACHE_KEY, remote)
+      else removeStored(CACHE_KEY)
+    })
+
+    return () => {
+      cancelled = true
     }
-  }, [config])
+  }, [])
+
+  // Track the Supabase admin session (it persists across reloads)
+  useEffect(() => {
+    if (!supabase) return
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAdminUser(isAdminUser(session?.user) ? session.user : null)
+    })
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  const publish = async (next) => {
+    setSyncState({ status: 'saving', error: '' })
+    const result = await saveSiteContent(next)
+    if (result.success) {
+      writeStored(CACHE_KEY, next)
+      setSyncState({ status: 'saved', error: '' })
+    } else {
+      setSyncState({ status: 'error', error: result.error })
+    }
+  }
+
+  // Persist an admin edit: shared with every visitor when signed in to Supabase as admin,
+  // otherwise kept in this browser only. Nothing is written before an admin edit happens.
+  const persistEdit = (next) => {
+    if (remoteStatus !== 'ready') {
+      writeStored(LOCAL_KEY, next)
+      return
+    }
+    if (!adminUser) return
+    clearTimeout(publishTimer.current)
+    publishTimer.current = setTimeout(() => publish(next), PUBLISH_DELAY_MS)
+  }
+
+  const commit = (updater) => {
+    const next = typeof updater === 'function' ? updater(configRef.current) : updater
+    configRef.current = next
+    setConfig(next)
+    persistEdit(next)
+  }
 
   const updateTheme = (themeUpdates) => {
-    setConfig(prev => ({
+    commit(prev => ({
       ...prev,
       theme: { ...prev.theme, ...themeUpdates }
     }))
   }
 
   const updateHero = (heroUpdates) => {
-    setConfig(prev => ({
+    commit(prev => ({
       ...prev,
       hero: { ...prev.hero, ...heroUpdates }
     }))
   }
 
   const updateBio = (newBio) => {
-    setConfig(prev => ({ ...prev, bio: newBio }))
+    commit(prev => ({ ...prev, bio: newBio }))
   }
 
   const updateMembers = (newMembers) => {
-    setConfig(prev => ({ ...prev, members: newMembers }))
+    commit(prev => ({ ...prev, members: newMembers }))
   }
 
   const updateSingles = (newSingles) => {
-    setConfig(prev => ({ ...prev, singles: newSingles }))
+    commit(prev => ({ ...prev, singles: newSingles }))
   }
 
   const updateGigs = (newGigs) => {
-    setConfig(prev => ({ ...prev, gigs: newGigs }))
+    commit(prev => ({ ...prev, gigs: newGigs }))
   }
 
   const updateMerch = (newMerch) => {
-    setConfig(prev => ({ ...prev, merch: newMerch }))
+    commit(prev => ({ ...prev, merch: newMerch }))
   }
 
   const updateContact = (newContact) => {
-    setConfig(prev => ({
+    commit(prev => ({
       ...prev,
       contact: { ...prev.contact, ...newContact }
     }))
   }
 
-  const resetToDefaults = () => {
+  // With shared content this deletes the published row, so the site returns to bandData.js
+  const resetToDefaults = async () => {
+    clearTimeout(publishTimer.current)
+    configRef.current = DEFAULT_CONFIG
     setConfig(DEFAULT_CONFIG)
-    localStorage.removeItem('pn_live_band_config')
+    removeStored(LOCAL_KEY)
+
+    if (remoteStatus === 'ready' && adminUser) {
+      setSyncState({ status: 'saving', error: '' })
+      const result = await deleteSiteContent()
+      if (result.success) {
+        removeStored(CACHE_KEY)
+        setSyncState({ status: 'saved', error: '' })
+      } else {
+        setSyncState({ status: 'error', error: result.error })
+      }
+    }
   }
 
   const importConfig = (jsonString) => {
     try {
       const parsed = JSON.parse(jsonString)
-      setConfig({
-        ...DEFAULT_CONFIG,
-        ...parsed
-      })
+      if (!parsed || typeof parsed !== 'object') throw new Error('Format file tidak valid')
+      commit(mergeConfig(parsed))
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
+
+  const retryPublish = () => publish(configRef.current)
 
   const currentTheme = THEME_PRESETS[config.theme.preset] || THEME_PRESETS.crimson
 
@@ -211,7 +328,13 @@ export function BandDataProvider({ children }) {
         updateMerch,
         updateContact,
         resetToDefaults,
-        importConfig
+        importConfig,
+        remoteStatus,
+        adminUser,
+        syncState,
+        adminLogin: adminSignIn,
+        adminLogout: adminSignOut,
+        retryPublish
       }}
     >
       {children}
