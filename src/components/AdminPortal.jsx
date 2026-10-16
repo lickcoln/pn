@@ -31,10 +31,16 @@ import {
   Cloud,
   CloudOff,
   LoaderCircle,
-  RefreshCw
+  RefreshCw,
+  Images
 } from 'lucide-react'
 import { useBandData } from '../context/BandDataContext'
-import { listBookingInquiries, listTicketRsvps } from '../lib/supabase'
+import { listBookingInquiries, listTicketRsvps, deleteMedia } from '../lib/supabase'
+import { BAND_MEMBERS, SINGLES_DISCOGRAPHY, MERCH_ITEMS, IMAGE_SLOTS } from '../data/bandData'
+import MediaField from './MediaField'
+
+// The shipped default of one field of a list item (so "Reset" can bring it back); '' for items the admin added
+const defaultOf = (defaults, id, field) => defaults.find((item) => item.id === id)?.[field] || ''
 
 export default function AdminPortal() {
   const {
@@ -49,9 +55,12 @@ export default function AdminPortal() {
     updateGigs,
     updateMerch,
     updateContact,
+    updateImages,
     resetToDefaults,
     importConfig,
+    getConfig,
     remoteStatus,
+    remoteReason,
     adminUser,
     syncState,
     adminLogin,
@@ -67,8 +76,21 @@ export default function AdminPortal() {
   const usesSupabaseLogin = remoteStatus === 'ready'
   const isAdmin = usesSupabaseLogin ? Boolean(adminUser) : legacyAdmin
   const loginHint = remoteStatus === 'loading'
-    ? 'Menghubungkan ke server...'
-    : usesSupabaseLogin ? 'Akun admin Supabase' : null
+    ? 'Connecting to the server...'
+    : usesSupabaseLogin ? 'Supabase admin account' : null
+  // Supabase is set up but this browser cannot reach it (offline, ad blocker, VPN or network block)
+  const serverUnreachable = remoteStatus === 'unavailable' && remoteReason === 'network'
+  // Photos and songs go to Supabase Storage, which needs the shared mode and an admin session
+  const canUpload = usesSupabaseLogin && Boolean(adminUser)
+
+  // A replaced upload is removed from storage after a short delay (the new link has to be published
+  // first), and only when nothing in the saved content still points to it
+  const discardOldMedia = (url) => {
+    if (!url) return
+    setTimeout(() => {
+      if (!JSON.stringify(getConfig()).includes(url)) deleteMedia(url)
+    }, 12000)
+  }
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [activeTab, setActiveTab] = useState('theme')
@@ -97,8 +119,8 @@ export default function AdminPortal() {
     venue: '',
     city: '',
     category: 'Club Gig',
-    status: 'Tiket Tersedia',
-    price: 'Rp 50.000',
+    status: 'Tickets Available',
+    price: 'IDR 50,000',
     description: '',
     mapsUrl: ''
   })
@@ -107,10 +129,10 @@ export default function AdminPortal() {
   const [newMerch, setNewMerch] = useState({
     name: '',
     price: 150000,
-    priceFormatted: 'Rp 150.000',
+    priceFormatted: 'IDR 150,000',
     category: 'Apparel',
     sizes: 'S, M, L, XL',
-    stock: 'Tersedia',
+    stock: 'In Stock',
     description: '',
     image: '/logo.png'
   })
@@ -207,7 +229,7 @@ export default function AdminPortal() {
       setUsername('')
       setPassword('')
     } else {
-      setLoginError('Username atau Password salah! (Cek kembali username: paranoidnoise & password: pn2026)')
+      setLoginError('Wrong username or password! (Check again: username paranoidnoise & password pn2026)')
     }
   }
 
@@ -218,7 +240,7 @@ export default function AdminPortal() {
     setShowDashboard(false)
   }
 
-  const notifySaved = (msg = 'Perubahan berhasil disimpan & diterapkan!') => {
+  const notifySaved = (msg = 'Changes saved & applied!') => {
     setSaveNotification(msg)
     setTimeout(() => setSaveNotification(''), 3000)
   }
@@ -227,25 +249,44 @@ export default function AdminPortal() {
   const handleSaveHeroAndTheme = (e) => {
     e.preventDefault()
     updateHero(heroForm)
-    notifySaved('Hero headline & tema berhasil diperbarui!')
+    notifySaved('Hero headline & theme updated!')
   }
 
   const handleSaveBio = (e) => {
     e.preventDefault()
     updateBio(bioText)
-    notifySaved('Profil & Bio band berhasil diperbarui!')
+    notifySaved('Band profile & bio updated!')
   }
 
   const handleSaveMembers = (e) => {
     e.preventDefault()
     updateMembers(membersList)
-    notifySaved('Data personil band berhasil diperbarui!')
+    notifySaved('Band member details updated!')
   }
 
   const handleMemberChange = (index, field, value) => {
     const updated = [...membersList]
     updated[index] = { ...updated[index], [field]: value }
     setMembersList(updated)
+  }
+
+  // Uploaded photos and songs are on the server already, so these save the form right away
+  const handleMemberPhoto = (id, url) => {
+    const updated = membersList.map((m) => (m.id === id ? { ...m, image: url } : m))
+    setMembersList(updated)
+    updateMembers(updated)
+  }
+
+  const handleMerchImage = (id, url) => {
+    const updated = merchList.map((m) => (m.id === id ? { ...m, image: url } : m))
+    setMerchList(updated)
+    updateMerch(updated)
+  }
+
+  const handleSingleMedia = (index, patch) => {
+    const updated = singlesList.map((s, i) => (i === index ? { ...s, ...patch } : s))
+    setSinglesList(updated)
+    updateSingles(updated)
   }
 
   // Gigs handlers
@@ -266,20 +307,20 @@ export default function AdminPortal() {
       venue: '',
       city: '',
       category: 'Club Gig',
-      status: 'Tiket Tersedia',
-      price: 'Rp 50.000',
+      status: 'Tickets Available',
+      price: 'IDR 50,000',
       description: '',
       mapsUrl: ''
     })
-    notifySaved('Jadwal gig baru berhasil ditambahkan!')
+    notifySaved('New gig added to the schedule!')
   }
 
   const handleDeleteGig = (id) => {
-    if (window.confirm('Yakin ingin menghapus jadwal gig ini?')) {
+    if (window.confirm('Are you sure you want to delete this gig?')) {
       const updated = gigsList.filter(g => g.id !== id)
       setGigsList(updated)
       updateGigs(updated)
-      notifySaved('Jadwal gig berhasil dihapus!')
+      notifySaved('Gig deleted!')
     }
   }
 
@@ -298,22 +339,22 @@ export default function AdminPortal() {
     setNewMerch({
       name: '',
       price: 150000,
-      priceFormatted: 'Rp 150.000',
+      priceFormatted: 'IDR 150,000',
       category: 'Apparel',
       sizes: 'S, M, L, XL',
-      stock: 'Tersedia',
+      stock: 'In Stock',
       description: '',
       image: '/logo.png'
     })
-    notifySaved('Produk merchandise baru berhasil ditambahkan!')
+    notifySaved('New merchandise product added!')
   }
 
   const handleDeleteMerch = (id) => {
-    if (window.confirm('Yakin ingin menghapus merchandise ini?')) {
+    if (window.confirm('Are you sure you want to delete this merchandise?')) {
       const updated = merchList.filter(m => m.id !== id)
       setMerchList(updated)
       updateMerch(updated)
-      notifySaved('Merchandise berhasil dihapus!')
+      notifySaved('Merchandise deleted!')
     }
   }
 
@@ -327,14 +368,14 @@ export default function AdminPortal() {
   const handleSaveSingles = (e) => {
     e.preventDefault()
     updateSingles(singlesList)
-    notifySaved('Data diskografi & lagu berhasil diperbarui!')
+    notifySaved('Discography & songs updated!')
   }
 
   // Contact handlers
   const handleSaveContact = (e) => {
     e.preventDefault()
     updateContact(contactForm)
-    notifySaved('Kontak & link media sosial berhasil diperbarui!')
+    notifySaved('Contact details & social links updated!')
   }
 
   // Export / Import
@@ -355,32 +396,32 @@ export default function AdminPortal() {
     reader.onload = (event) => {
       const result = importConfig(event.target.result)
       if (result.success) {
-        notifySaved('Konfigurasi berhasil diimpor!')
+        notifySaved('Configuration imported!')
       } else {
-        alert('Gagal mengimpor file: ' + result.error)
+        alert('Could not import the file: ' + result.error)
       }
     }
     reader.readAsText(file)
   }
 
   const handleResetDefaults = () => {
-    if (window.confirm('Apakah Anda yakin ingin mengembalikan semua data & tema ke pengaturan awal pabrik Paranoid Noise?')) {
+    if (window.confirm('Are you sure you want to restore all content, images and the theme to the original Paranoid Noise defaults? With the shared server mode this also removes the content published for every visitor.')) {
       resetToDefaults()
-      notifySaved('Data & tema telah dikembalikan ke default!')
+      notifySaved('Content & theme restored to the defaults!')
     }
   }
 
   return (
     <>
       {/* 1. Subtle & Hidden Access Button in Bottom-Right Corner */}
-      <div className="fixed bottom-3 right-3 z-40 flex items-center gap-2">
+      <div className="fixed bottom-[4.75rem] lg:bottom-3 right-3 z-40 flex items-center gap-2">
         {isAdmin && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={() => setShowDashboard(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-950/90 border border-red-600 text-red-200 text-xs font-tech font-bold uppercase shadow-lg shadow-red-950/60 hover:bg-red-900 transition-all cursor-pointer"
-            title="Buka Control Panel Administrator"
+            title="Open the administrator control panel"
           >
             <Shield className="w-3.5 h-3.5 text-red-400" />
             <span className="hidden sm:inline">ADMIN CMS</span>
@@ -400,8 +441,8 @@ export default function AdminPortal() {
               ? 'bg-neutral-900 border-red-600 text-red-400 opacity-90 hover:opacity-100 shadow-md shadow-red-950/50'
               : 'bg-black/40 border-neutral-800 text-neutral-600 hover:text-neutral-300 opacity-30 hover:opacity-90'
           }`}
-          title={isAdmin ? 'Admin Mode Aktif (Klik untuk Buka Panel)' : 'Akses Tersembunyi Administrator (PN)'}
-          aria-label="Akses Admin"
+          title={isAdmin ? 'Admin mode is on (click to open the panel)' : 'Hidden administrator access (PN)'}
+          aria-label="Admin access"
         >
           {isAdmin ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
         </button>
@@ -439,8 +480,19 @@ export default function AdminPortal() {
               </div>
 
               <p className="text-xs font-tech text-neutral-400 mb-6">
-                Masukkan kredensial administrator untuk mengelola konten, jadwal tour, merchandise, personil, dan tema website.
+                Enter your administrator credentials to manage the website content, tour schedule, merchandise, band members, and theme.
               </p>
+
+              {serverUnreachable && (
+                <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-800/80 text-xs font-tech text-amber-200 mb-4 flex items-start gap-2">
+                  <CloudOff className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span>
+                    This browser cannot reach the server. Turn off ad-blocker or privacy extensions and any VPN for this
+                    site, or try another network, then reload the page. The local login below only changes what you see
+                    in this browser.
+                  </span>
+                </div>
+              )}
 
               {loginError && (
                 <div className="p-3 rounded-xl bg-red-950/70 border border-red-700/80 text-xs font-tech text-red-200 mb-4 flex items-start gap-2">
@@ -462,7 +514,7 @@ export default function AdminPortal() {
                       autoFocus
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder={usesSupabaseLogin ? 'Masukkan email admin' : 'Masukkan username'}
+                      placeholder={usesSupabaseLogin ? 'Enter the admin email' : 'Enter your username'}
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                     />
                   </div>
@@ -479,7 +531,7 @@ export default function AdminPortal() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Masukkan password"
+                      placeholder="Enter your password"
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                     />
                   </div>
@@ -487,7 +539,7 @@ export default function AdminPortal() {
 
                 <div className="pt-2 flex items-center justify-between">
                   <span className="text-[11px] font-tech text-neutral-500">
-                    {loginHint ?? <>Akses: <code>paranoidnoise</code></>}
+                    {loginHint ?? <>Access: <code>paranoidnoise</code></>}
                   </span>
                   <button
                     type="submit"
@@ -495,7 +547,7 @@ export default function AdminPortal() {
                     className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-red-950/60"
                   >
                     <Unlock className="w-3.5 h-3.5" />
-                    <span>{loggingIn ? 'Memeriksa...' : 'Masuk Administrator'}</span>
+                    <span>{loggingIn ? 'Checking...' : 'Sign In as Administrator'}</span>
                   </button>
                 </div>
               </form>
@@ -530,7 +582,7 @@ export default function AdminPortal() {
                       </span>
                     </div>
                     <span className="text-xs font-tech text-neutral-400">
-                      Login sebagai: <strong className="text-neutral-200">{usesSupabaseLogin ? adminUser?.email : 'paranoidnoise'}</strong> &bull; Ubah tampilan, informasi, dan tema live.
+                      Signed in as: <strong className="text-neutral-200">{usesSupabaseLogin ? adminUser?.email : 'paranoidnoise'}</strong> &bull; Edit the look, information, and theme live.
                     </span>
                   </div>
                 </div>
@@ -545,7 +597,7 @@ export default function AdminPortal() {
                   <button
                     onClick={() => setShowDashboard(false)}
                     className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white transition-colors"
-                    title="Tutup Panel & Lihat Website"
+                    title="Close the panel & view the website"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -557,7 +609,7 @@ export default function AdminPortal() {
                 <div className="bg-green-950/80 border-b border-green-800 px-6 py-2.5 text-xs font-tech text-green-300 flex items-center justify-between animate-fadeIn shrink-0">
                   <span className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <strong>Sukses:</strong> {saveNotification}
+                    <strong>Success:</strong> {saveNotification}
                   </span>
                   <button onClick={() => setSaveNotification('')} className="text-green-400 hover:text-white">
                     <X className="w-3.5 h-3.5" />
@@ -582,10 +634,10 @@ export default function AdminPortal() {
                     ) : (
                       <Cloud className="w-4 h-4" />
                     )}
-                    {syncState.status === 'saving' && 'Menyimpan ke server...'}
-                    {syncState.status === 'saved' && 'Tersimpan di server dan langsung terlihat oleh semua pengunjung.'}
-                    {syncState.status === 'error' && `Gagal menyimpan ke server: ${syncState.error}`}
-                    {syncState.status === 'idle' && 'Terhubung ke server: perubahan otomatis tersimpan dan terlihat oleh semua pengunjung.'}
+                    {syncState.status === 'saving' && 'Saving to the server...'}
+                    {syncState.status === 'saved' && 'Saved to the server and live for every visitor.'}
+                    {syncState.status === 'error' && `Could not save to the server: ${syncState.error}`}
+                    {syncState.status === 'idle' && 'Connected to the server: changes are saved automatically and live for every visitor.'}
                   </span>
                   {syncState.status === 'error' && (
                     <button
@@ -593,14 +645,16 @@ export default function AdminPortal() {
                       className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-bold uppercase shrink-0"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      Coba lagi
+                      Try again
                     </button>
                   )}
                 </div>
               ) : (
                 <div className="border-b px-6 py-2 text-xs font-tech flex items-center gap-2 shrink-0 bg-amber-950/50 border-amber-900 text-amber-300">
                   <CloudOff className="w-4 h-4 shrink-0" />
-                  Mode lokal: perubahan hanya tersimpan di browser ini dan tidak terlihat oleh pengunjung lain.
+                  {serverUnreachable
+                    ? 'Cannot reach the server from this browser, so changes stay in this browser only. Check your ad blocker, VPN or network, then reload.'
+                    : 'Local mode: changes are only saved in this browser and other visitors cannot see them.'}
                 </div>
               )}
 
@@ -616,7 +670,17 @@ export default function AdminPortal() {
                     }`}
                   >
                     <Palette className="w-4 h-4" />
-                    <span>Tema &amp; Tampilan</span>
+                    <span>Theme &amp; Look</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('images')}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-tech font-bold uppercase tracking-wider transition-colors shrink-0 text-left ${
+                      activeTab === 'images' ? 'bg-red-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+                    }`}
+                  >
+                    <Images className="w-4 h-4" />
+                    <span>Images &amp; Backgrounds</span>
                   </button>
 
                   <button
@@ -626,7 +690,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <FileText className="w-4 h-4" />
-                    <span>Profil &amp; Bio Band</span>
+                    <span>Profile &amp; Band Bio</span>
                   </button>
 
                   <button
@@ -636,7 +700,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <Users className="w-4 h-4" />
-                    <span>Personil Band</span>
+                    <span>Band Members</span>
                   </button>
 
                   <button
@@ -646,7 +710,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <Calendar className="w-4 h-4" />
-                    <span>Jadwal Gigs &amp; Tour</span>
+                    <span>Gigs &amp; Tour Schedule</span>
                   </button>
 
                   <button
@@ -656,7 +720,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Data Tiket RSVP</span>
+                    <span>Ticket RSVPs</span>
                   </button>
 
                   <button
@@ -666,7 +730,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <Inbox className="w-4 h-4" />
-                    <span>Data Booking Gig</span>
+                    <span>Booking Requests</span>
                   </button>
 
                   <button
@@ -686,7 +750,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <Disc className="w-4 h-4" />
-                    <span>Diskografi Lagu</span>
+                    <span>Discography</span>
                   </button>
 
                   <button
@@ -696,7 +760,7 @@ export default function AdminPortal() {
                     }`}
                   >
                     <Phone className="w-4 h-4" />
-                    <span>Kontak &amp; Sosmed</span>
+                    <span>Contact &amp; Social</span>
                   </button>
 
                   <button
@@ -718,17 +782,17 @@ export default function AdminPortal() {
                     <div className="space-y-6 max-w-3xl">
                       <div>
                         <h4 className="font-bebas text-3xl text-white tracking-wide">
-                          PENGATURAN TEMA &amp; TEMPLATE VISUAL
+                          THEME &amp; VISUAL SETTINGS
                         </h4>
                         <p className="text-xs font-tech text-neutral-400">
-                          Ubah skema warna aksen, intensitas noise grain grunge, dan gaya hero banner secara live.
+                          Change the accent color scheme, the grunge noise grain intensity, and the hero banner style live.
                         </p>
                       </div>
 
                       {/* Theme Presets */}
                       <div className="space-y-3">
                         <label className="block text-xs font-tech font-bold uppercase text-neutral-300">
-                          Pilih Preset Warna Aksen Rock:
+                          Choose a Rock Accent Color Preset:
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                           {Object.values(themePresets).map((preset) => {
@@ -765,13 +829,13 @@ export default function AdminPortal() {
                       {/* Visual Effects & Noise */}
                       <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 space-y-4">
                         <span className="text-xs font-tech font-bold uppercase text-neutral-300 block">
-                          Efek Grunge &amp; Distorsi:
+                          Grunge &amp; Distortion Effects:
                         </span>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-[11px] font-tech text-neutral-400 mb-1">
-                              Intensitas Noise Background
+                              Background Noise Intensity
                             </label>
                             <input
                               type="range"
@@ -789,14 +853,14 @@ export default function AdminPortal() {
 
                           <div>
                             <label className="block text-[11px] font-tech text-neutral-400 mb-1">
-                              Intensitas Animasi Glitch
+                              Glitch Animation Intensity
                             </label>
                             <select
                               value={config.theme.glitchIntensity}
                               onChange={(e) => updateTheme({ glitchIntensity: e.target.value })}
                               className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-xs font-tech text-white"
                             >
-                              <option value="off">Off (Mati)</option>
+                              <option value="off">Off</option>
                               <option value="normal">Normal (Hover Only)</option>
                               <option value="extreme">Extreme (Full Rock Chaos)</option>
                             </select>
@@ -807,12 +871,12 @@ export default function AdminPortal() {
                       {/* Hero Banner Text */}
                       <form onSubmit={handleSaveHeroAndTheme} className="space-y-4">
                         <span className="text-xs font-tech font-bold uppercase text-neutral-300 block">
-                          Headline &amp; Tagline Hero Banner:
+                          Hero Banner Headline &amp; Tagline:
                         </span>
 
                         <div>
                           <label className="block text-[11px] font-tech text-neutral-400 mb-1">
-                            Judul Utama Hero
+                            Hero Main Title
                           </label>
                           <input
                             type="text"
@@ -824,7 +888,7 @@ export default function AdminPortal() {
 
                         <div>
                           <label className="block text-[11px] font-tech text-neutral-400 mb-1">
-                            Tagline Rock
+                            Rock Tagline
                           </label>
                           <input
                             type="text"
@@ -850,9 +914,82 @@ export default function AdminPortal() {
                           type="submit"
                           className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                         >
-                          <Save className="w-4 h-4" /> Simpan Pengaturan Tema &amp; Hero
+                          <Save className="w-4 h-4" /> Save Theme &amp; Hero Settings
                         </button>
                       </form>
+                    </div>
+                  )}
+
+                  {/* TAB 1b: IMAGES & BACKGROUNDS */}
+                  {activeTab === 'images' && (
+                    <div className="space-y-8 max-w-4xl">
+                      <div>
+                        <h4 className="font-bebas text-3xl text-white tracking-wide">
+                          IMAGES &amp; BACKGROUNDS
+                        </h4>
+                        <p className="text-xs font-tech text-neutral-400">
+                          Replace any photo on the website, including the logo and the background images. Pick a photo
+                          from your device and it goes live for every visitor right away. Large photos are shrunk
+                          automatically before they are uploaded.
+                        </p>
+                      </div>
+
+                      {!canUpload && (
+                        <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-800/80 text-xs font-tech text-amber-200 flex items-start gap-2">
+                          <CloudOff className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                          <span>
+                            Uploading needs the shared server mode and the Supabase admin sign-in (see supabase-admin.sql and
+                            supabase-media.sql). Until then you can still point an image to a web link with "Use a link".
+                          </span>
+                        </div>
+                      )}
+
+                      {['Logo', 'Backgrounds', 'Photos', 'Downloads'].map((group) => (
+                        <div key={group} className="space-y-3">
+                          <h5 className="font-bebas text-2xl text-white tracking-wider border-b border-neutral-800 pb-1">
+                            {group.toUpperCase()}
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {IMAGE_SLOTS.filter((slot) => slot.group === group).map((slot) => (
+                              <MediaField
+                                key={slot.key}
+                                label={slot.label}
+                                hint={slot.where}
+                                folder={`images/${slot.key}`}
+                                value={config.images[slot.key]}
+                                fallback={slot.fallback}
+                                maxEdge={slot.maxEdge}
+                                canUpload={canUpload}
+                                onChange={(url) => updateImages({ [slot.key]: url })}
+                                onDiscard={discardOldMedia}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 text-xs font-tech text-neutral-400 space-y-2">
+                        <p>
+                          <strong className="text-neutral-200">More photos live in their own tabs:</strong> each band member's
+                          photo, the cover art and MP3 of every single, and the product photos of the merchandise.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            ['members', 'Member photos'],
+                            ['singles', 'Cover art & songs'],
+                            ['merch', 'Merchandise photos']
+                          ].map(([tab, text]) => (
+                            <button
+                              key={tab}
+                              type="button"
+                              onClick={() => setActiveTab(tab)}
+                              className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold"
+                            >
+                              {text}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -861,16 +998,16 @@ export default function AdminPortal() {
                     <form onSubmit={handleSaveBio} className="space-y-6 max-w-3xl">
                       <div>
                         <h4 className="font-bebas text-3xl text-white tracking-wide">
-                          EDIT PROFIL &amp; KETERANGAN BAND
+                          EDIT BAND PROFILE &amp; STORY
                         </h4>
                         <p className="text-xs font-tech text-neutral-400">
-                          Ubah deskripsi narasi profil band yang ditampilkan di bagian "ABOUT PARANOID NOISE".
+                          Edit the band story shown in the "ABOUT PARANOID NOISE" section.
                         </p>
                       </div>
 
                       <div>
                         <label className="block text-xs font-tech font-bold uppercase text-neutral-300 mb-1.5">
-                          Paragraf Profil Resmi Band:
+                          Official Band Profile Text:
                         </label>
                         <textarea
                           rows={10}
@@ -879,13 +1016,13 @@ export default function AdminPortal() {
                           className="w-full p-4 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 text-white text-xs font-tech leading-relaxed resize-y"
                         />
                         <div className="flex justify-between text-[11px] font-tech text-neutral-500 mt-1">
-                          <span>{bioText.length} karakter</span>
+                          <span>{bioText.length} characters</span>
                           <button
                             type="button"
                             onClick={() => setBioText(BAND_BIO)}
                             className="text-red-400 hover:text-red-300 underline"
                           >
-                            Reset ke Teks Asli
+                            Reset to the Original Text
                           </button>
                         </div>
                       </div>
@@ -894,7 +1031,7 @@ export default function AdminPortal() {
                         type="submit"
                         className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                       >
-                        <Save className="w-4 h-4" /> Simpan Perubahan Profil
+                        <Save className="w-4 h-4" /> Save Profile Changes
                       </button>
                     </form>
                   )}
@@ -904,10 +1041,10 @@ export default function AdminPortal() {
                     <form onSubmit={handleSaveMembers} className="space-y-6 max-w-4xl">
                       <div>
                         <h4 className="font-bebas text-3xl text-white tracking-wide">
-                          EDIT INFORMASI PERSONIL BAND
+                          EDIT BAND MEMBER INFORMATION
                         </h4>
                         <p className="text-xs font-tech text-neutral-400">
-                          Ubah nama, peran instrumen, gear weaponry, dan deskripsi personil (Arief, Ganjar, Kimao).
+                          Edit each member's name, role, gear, description, and photo.
                         </p>
                       </div>
 
@@ -927,10 +1064,23 @@ export default function AdminPortal() {
                               </div>
                             </div>
 
+                            <MediaField
+                              label="Member photo"
+                              hint="Shown on the member card. Uploading saves this form."
+                              folder={`images/members/${m.id}`}
+                              value={m.image}
+                              fallback={defaultOf(BAND_MEMBERS, m.id, 'image')}
+                              maxEdge={1200}
+                              compact
+                              canUpload={canUpload}
+                              onChange={(url) => handleMemberPhoto(m.id, url)}
+                              onDiscard={discardOldMedia}
+                            />
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-[11px] font-tech font-semibold text-neutral-300 mb-1">
-                                  Nama Personil
+                                  Member Name
                                 </label>
                                 <input
                                   type="text"
@@ -942,7 +1092,7 @@ export default function AdminPortal() {
 
                               <div>
                                 <label className="block text-[11px] font-tech font-semibold text-neutral-300 mb-1">
-                                  Peran &amp; Instrumen
+                                  Role &amp; Instrument
                                 </label>
                                 <input
                                   type="text"
@@ -955,7 +1105,7 @@ export default function AdminPortal() {
 
                             <div>
                               <label className="block text-[11px] font-tech font-semibold text-neutral-300 mb-1">
-                                Gear &amp; Weaponry (Instrumen yang dipakai)
+                                Gear &amp; Weaponry (instruments used)
                               </label>
                               <input
                                 type="text"
@@ -967,7 +1117,7 @@ export default function AdminPortal() {
 
                             <div>
                               <label className="block text-[11px] font-tech font-semibold text-neutral-300 mb-1">
-                                Deskripsi Karakter Musik
+                                Musical Character Description
                               </label>
                               <textarea
                                 rows={2}
@@ -979,7 +1129,7 @@ export default function AdminPortal() {
 
                             <div>
                               <label className="block text-[11px] font-tech font-semibold text-neutral-300 mb-1">
-                                Kutipan / Quotes
+                                Quote
                               </label>
                               <input
                                 type="text"
@@ -996,7 +1146,7 @@ export default function AdminPortal() {
                         type="submit"
                         className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                       >
-                        <Save className="w-4 h-4" /> Simpan Data Personil
+                        <Save className="w-4 h-4" /> Save Member Details
                       </button>
                     </form>
                   )}
@@ -1007,10 +1157,10 @@ export default function AdminPortal() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <h4 className="font-bebas text-3xl text-white tracking-wide">
-                            MANAJEMEN JADWAL GIGS &amp; TOUR
+                            GIGS &amp; TOUR SCHEDULE MANAGEMENT
                           </h4>
                           <p className="text-xs font-tech text-neutral-400">
-                            Tambah, edit, atau hapus jadwal pertunjukan panggung Paranoid Noise.
+                            Add or delete Paranoid Noise live show dates.
                           </p>
                         </div>
 
@@ -1019,7 +1169,7 @@ export default function AdminPortal() {
                           className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shrink-0 shadow-lg"
                         >
                           <Plus className="w-4 h-4" />
-                          <span>{showAddGig ? 'Batal Tambah' : 'Tambah Jadwal Gig'}</span>
+                          <span>{showAddGig ? 'Cancel' : 'Add Gig'}</span>
                         </button>
                       </div>
 
@@ -1027,30 +1177,30 @@ export default function AdminPortal() {
                       {showAddGig && (
                         <form onSubmit={handleAddNewGig} className="p-5 rounded-2xl bg-neutral-900 border border-red-700/80 space-y-4">
                           <h5 className="font-bebas text-2xl text-white tracking-wide">
-                            TAMBAH JADWAL GIG BARU
+                            ADD A NEW GIG
                           </h5>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Nama Acara *</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Event Name *</label>
                               <input
                                 type="text"
                                 required
                                 value={newGig.title}
                                 onChange={(e) => setNewGig({ ...newGig, title: e.target.value })}
-                                placeholder="Contoh: Bandung Rockfest 2026"
+                                placeholder="e.g. Bandung Rockfest 2026"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Tanggal (Contoh: 15 NOVEMBER 2026) *</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Date (e.g. 15 NOVEMBER 2026) *</label>
                               <input
                                 type="text"
                                 required
                                 value={newGig.date}
                                 onChange={(e) => setNewGig({ ...newGig, date: e.target.value })}
-                                placeholder="TANGGAL BULAN TAHUN"
+                                placeholder="DAY MONTH YEAR"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
@@ -1058,19 +1208,19 @@ export default function AdminPortal() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Venue / Tempat *</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Venue / Location *</label>
                               <input
                                 type="text"
                                 required
                                 value={newGig.venue}
                                 onChange={(e) => setNewGig({ ...newGig, venue: e.target.value })}
-                                placeholder="Nama venue"
+                                placeholder="Venue name"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Kota *</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">City *</label>
                               <input
                                 type="text"
                                 required
@@ -1082,12 +1232,12 @@ export default function AdminPortal() {
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Harga Tiket</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Ticket Price</label>
                               <input
                                 type="text"
                                 value={newGig.price}
                                 onChange={(e) => setNewGig({ ...newGig, price: e.target.value })}
-                                placeholder="Rp 50.000 / Free Entry"
+                                placeholder="IDR 50,000 / Free Entry"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
@@ -1095,18 +1245,18 @@ export default function AdminPortal() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Status Tiket</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Ticket Status</label>
                               <input
                                 type="text"
                                 value={newGig.status}
                                 onChange={(e) => setNewGig({ ...newGig, status: e.target.value })}
-                                placeholder="Tiket Tersedia / Presale 1 / Sold Out"
+                                placeholder="Tickets Available / Presale 1 / Sold Out"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Link Google Maps (Opsional)</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Google Maps Link (Optional)</label>
                               <input
                                 type="url"
                                 value={newGig.mapsUrl}
@@ -1118,12 +1268,12 @@ export default function AdminPortal() {
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-tech text-neutral-300 mb-1">Deskripsi Singkat</label>
+                            <label className="block text-[11px] font-tech text-neutral-300 mb-1">Short Description</label>
                             <input
                               type="text"
                               value={newGig.description}
                               onChange={(e) => setNewGig({ ...newGig, description: e.target.value })}
-                              placeholder="Keterangan singkat tentang gig..."
+                              placeholder="A short note about the gig..."
                               className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                             />
                           </div>
@@ -1132,7 +1282,7 @@ export default function AdminPortal() {
                             type="submit"
                             className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                           >
-                            <Plus className="w-4 h-4" /> Simpan &amp; Tayangkan Jadwal Gig
+                            <Plus className="w-4 h-4" /> Save &amp; Publish Gig
                           </button>
                         </form>
                       )}
@@ -1160,7 +1310,7 @@ export default function AdminPortal() {
                             <button
                               onClick={() => handleDeleteGig(g.id)}
                               className="p-2 rounded-lg bg-neutral-800 text-red-400 hover:bg-red-950 hover:text-red-300 transition-colors"
-                              title="Hapus Gig"
+                              title="Delete gig"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1176,10 +1326,10 @@ export default function AdminPortal() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-bebas text-3xl text-white tracking-wide">
-                            DATA RESERVASI TIKET DARI PENONTON
+                            TICKET RESERVATIONS FROM FANS
                           </h4>
                           <p className="text-xs font-tech text-neutral-400">
-                            Daftar penonton yang melakukan reservasi tiket / RSVP melalui website.
+                            Fans who reserved tickets / RSVP'd through the website.
                           </p>
                         </div>
                         <button
@@ -1193,14 +1343,14 @@ export default function AdminPortal() {
                       {inboxError && (
                         <div className="p-3 rounded-xl bg-red-950/70 border border-red-700/80 text-xs font-tech text-red-200 flex items-start gap-2">
                           <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                          <span>Gagal memuat data dari server: {inboxError}</span>
+                          <span>Could not load the data from the server: {inboxError}</span>
                         </div>
                       )}
 
                       {rsvpsList.length === 0 ? (
                         <div className="text-center py-12 text-neutral-500 font-tech">
                           <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">Belum ada data reservasi tiket baru dari pengunjung.</p>
+                          <p className="text-sm">No ticket reservations from visitors yet.</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -1208,19 +1358,19 @@ export default function AdminPortal() {
                             <div key={rsvp.id ?? idx} className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 text-xs font-tech space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-white text-sm">{rsvp.fan_name}</span>
-                                <span className="text-red-400 font-bold">{rsvp.ticket_count} Tiket</span>
+                                <span className="text-red-400 font-bold">{rsvp.ticket_count} {rsvp.ticket_count === 1 ? 'Ticket' : 'Tickets'}</span>
                               </div>
                               <div className="text-neutral-400">
                                 Event: <strong className="text-neutral-200">{rsvp.event_title}</strong>
                               </div>
                               <div className="text-neutral-400 flex flex-wrap gap-4 pt-1">
-                                <span>No. WA: <strong>{rsvp.fan_phone}</strong></span>
+                                <span>WhatsApp: <strong>{rsvp.fan_phone}</strong></span>
                                 <span>Email: <strong>{rsvp.fan_email || '-'}</strong></span>
-                                <span>Tgl: {new Date(rsvp.created_at).toLocaleString('id-ID')}</span>
+                                <span>Date: {new Date(rsvp.created_at).toLocaleString('en-GB')}</span>
                               </div>
                               {rsvp.notes && (
                                 <div className="text-neutral-500 italic pt-1">
-                                  Catatan: "{rsvp.notes}"
+                                  Notes: "{rsvp.notes}"
                                 </div>
                               )}
                             </div>
@@ -1236,10 +1386,10 @@ export default function AdminPortal() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-bebas text-3xl text-white tracking-wide">
-                            PENGAJUAN BOOKING DARI PROMOTOR / EO
+                            BOOKING REQUESTS FROM PROMOTERS / ORGANIZERS
                           </h4>
                           <p className="text-xs font-tech text-neutral-400">
-                            Pengajuan booking panggung yang masuk lewat formulir di website.
+                            Stage booking requests sent through the website form.
                           </p>
                         </div>
                         <button
@@ -1253,14 +1403,14 @@ export default function AdminPortal() {
                       {inboxError && (
                         <div className="p-3 rounded-xl bg-red-950/70 border border-red-700/80 text-xs font-tech text-red-200 flex items-start gap-2">
                           <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                          <span>Gagal memuat data dari server: {inboxError}</span>
+                          <span>Could not load the data from the server: {inboxError}</span>
                         </div>
                       )}
 
                       {bookingsList.length === 0 ? (
                         <div className="text-center py-12 text-neutral-500 font-tech">
                           <Inbox className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">Belum ada pengajuan booking dari promotor / EO.</p>
+                          <p className="text-sm">No booking requests from promoters / organizers yet.</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -1271,19 +1421,19 @@ export default function AdminPortal() {
                                 <span className="text-red-400 font-bold shrink-0">{booking.event_date}</span>
                               </div>
                               <div className="text-neutral-400">
-                                Penyelenggara: <strong className="text-neutral-200">{booking.organizer_name}</strong>
+                                Organizer: <strong className="text-neutral-200">{booking.organizer_name}</strong>
                                 {' '}&bull; {booking.city}{booking.venue ? `, ${booking.venue}` : ''}
                               </div>
                               <div className="text-neutral-400 flex flex-wrap gap-4 pt-1">
-                                <span>No. WA: <strong>{booking.phone}</strong></span>
+                                <span>WhatsApp: <strong>{booking.phone}</strong></span>
                                 <span>Email: <strong>{booking.email}</strong></span>
-                                {booking.event_type && <span>Jenis: {booking.event_type}</span>}
+                                {booking.event_type && <span>Type: {booking.event_type}</span>}
                                 {booking.budget_estimate && <span>Budget: {booking.budget_estimate}</span>}
-                                <span>Tgl: {new Date(booking.created_at).toLocaleString('id-ID')}</span>
+                                <span>Date: {new Date(booking.created_at).toLocaleString('en-GB')}</span>
                               </div>
                               {booking.message && (
                                 <div className="text-neutral-500 italic pt-1">
-                                  Pesan: "{booking.message}"
+                                  Message: "{booking.message}"
                                 </div>
                               )}
                             </div>
@@ -1299,10 +1449,10 @@ export default function AdminPortal() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <h4 className="font-bebas text-3xl text-white tracking-wide">
-                            MANAJEMEN OFFICIAL MERCHANDISE
+                            OFFICIAL MERCHANDISE MANAGEMENT
                           </h4>
                           <p className="text-xs font-tech text-neutral-400">
-                            Kelola katalog produk, harga, stok, dan deskripsi merchandise Paranoid Noise.
+                            Manage the product catalog, prices, stock, and descriptions of the Paranoid Noise merchandise.
                           </p>
                         </div>
 
@@ -1311,7 +1461,7 @@ export default function AdminPortal() {
                           className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shrink-0 shadow-lg"
                         >
                           <Plus className="w-4 h-4" />
-                          <span>{showAddMerch ? 'Batal Tambah' : 'Tambah Merchandise'}</span>
+                          <span>{showAddMerch ? 'Cancel' : 'Add Merchandise'}</span>
                         </button>
                       </div>
 
@@ -1319,24 +1469,24 @@ export default function AdminPortal() {
                       {showAddMerch && (
                         <form onSubmit={handleAddNewMerch} className="p-5 rounded-2xl bg-neutral-900 border border-red-700/80 space-y-4">
                           <h5 className="font-bebas text-2xl text-white tracking-wide">
-                            TAMBAH PRODUK MERCHANDISE BARU
+                            ADD A NEW MERCHANDISE PRODUCT
                           </h5>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Nama Produk *</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Product Name *</label>
                               <input
                                 type="text"
                                 required
                                 value={newMerch.name}
                                 onChange={(e) => setNewMerch({ ...newMerch, name: e.target.value })}
-                                placeholder="Contoh: PN Grunge Skull T-Shirt"
+                                placeholder="e.g. PN Grunge Skull T-Shirt"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Harga (Angka IDR) *</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Price (IDR, numbers only) *</label>
                               <input
                                 type="number"
                                 required
@@ -1346,7 +1496,7 @@ export default function AdminPortal() {
                                   setNewMerch({
                                     ...newMerch,
                                     price: val,
-                                    priceFormatted: `Rp ${val.toLocaleString('id-ID')}`
+                                    priceFormatted: `IDR ${val.toLocaleString('en-US')}`
                                   })
                                 }}
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
@@ -1356,18 +1506,18 @@ export default function AdminPortal() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Kategori</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Category</label>
                               <input
                                 type="text"
                                 value={newMerch.category}
                                 onChange={(e) => setNewMerch({ ...newMerch, category: e.target.value })}
-                                placeholder="Apparel / Aksesoris / Audio"
+                                placeholder="Apparel / Accessories / Audio"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Pilihan Ukuran (Pisahkan Koma)</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Size Options (comma separated)</label>
                               <input
                                 type="text"
                                 value={newMerch.sizes}
@@ -1378,33 +1528,45 @@ export default function AdminPortal() {
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Status Stok</label>
+                              <label className="block text-[11px] font-tech text-neutral-300 mb-1">Stock Status</label>
                               <input
                                 type="text"
                                 value={newMerch.stock}
                                 onChange={(e) => setNewMerch({ ...newMerch, stock: e.target.value })}
-                                placeholder="Tersedia / Sisa 10 Pcs"
+                                placeholder="In Stock / Only 10 Left"
                                 className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white"
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-tech text-neutral-300 mb-1">Deskripsi Produk</label>
+                            <label className="block text-[11px] font-tech text-neutral-300 mb-1">Product Description</label>
                             <textarea
                               rows={2}
                               value={newMerch.description}
                               onChange={(e) => setNewMerch({ ...newMerch, description: e.target.value })}
-                              placeholder="Keterangan bahan kain, sablon, dll..."
+                              placeholder="Fabric, printing, and other details..."
                               className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs font-tech text-white resize-none"
                             />
                           </div>
+
+                          <MediaField
+                            label="Product photo"
+                            hint="Shown on the product card and in the cart."
+                            folder="images/merch"
+                            value={newMerch.image}
+                            maxEdge={1200}
+                            compact
+                            canUpload={canUpload}
+                            onChange={(url) => setNewMerch({ ...newMerch, image: url })}
+                            onDiscard={discardOldMedia}
+                          />
 
                           <button
                             type="submit"
                             className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                           >
-                            <Plus className="w-4 h-4" /> Simpan Produk Merchandise
+                            <Plus className="w-4 h-4" /> Save Merchandise Product
                           </button>
                         </form>
                       )}
@@ -1412,8 +1574,8 @@ export default function AdminPortal() {
                       {/* Merch List */}
                       <div className="space-y-3">
                         {merchList.map((m) => (
+                          <div key={m.id} className="space-y-2">
                           <div
-                            key={m.id}
                             className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between gap-4"
                           >
                             <div className="flex items-center gap-4">
@@ -1428,10 +1590,23 @@ export default function AdminPortal() {
                             <button
                               onClick={() => handleDeleteMerch(m.id)}
                               className="p-2 rounded-lg bg-neutral-800 text-red-400 hover:bg-red-950 hover:text-red-300 transition-colors"
-                              title="Hapus Merchandise"
+                              title="Delete merchandise"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
+                          </div>
+                          <MediaField
+                            label="Product photo"
+                            hint="Uploading saves this list."
+                            folder="images/merch"
+                            value={m.image}
+                            fallback={defaultOf(MERCH_ITEMS, m.id, 'image')}
+                            maxEdge={1200}
+                            compact
+                            canUpload={canUpload}
+                            onChange={(url) => handleMerchImage(m.id, url)}
+                            onDiscard={discardOldMedia}
+                          />
                           </div>
                         ))}
                       </div>
@@ -1443,10 +1618,10 @@ export default function AdminPortal() {
                     <form onSubmit={handleSaveSingles} className="space-y-6 max-w-4xl">
                       <div>
                         <h4 className="font-bebas text-3xl text-white tracking-wide">
-                          EDIT DISKOGRAFI 7 SINGLES RESMI
+                          EDIT THE OFFICIAL DISCOGRAPHY
                         </h4>
                         <p className="text-xs font-tech text-neutral-400">
-                          Ubah judul, tanggal rilis, deskripsi, dan link streaming (Spotify, YouTube, SoundCloud).
+                          Edit titles, release dates, descriptions, streaming links (Spotify, YouTube, SoundCloud), cover art, and the MP3 of each single.
                         </p>
                       </div>
 
@@ -1460,9 +1635,35 @@ export default function AdminPortal() {
                               <span className="text-xs font-mono text-neutral-400">{s.releaseDate}</span>
                             </div>
 
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                              <MediaField
+                                label="Cover art"
+                                hint="Uploading saves this form."
+                                folder={`images/covers/${s.id}`}
+                                value={s.coverArt}
+                                fallback={defaultOf(SINGLES_DISCOGRAPHY, s.id, 'coverArt')}
+                                maxEdge={1200}
+                                compact
+                                canUpload={canUpload}
+                                onChange={(url) => handleSingleMedia(idx, { coverArt: url })}
+                                onDiscard={discardOldMedia}
+                              />
+                              <MediaField
+                                label="Song (MP3)"
+                                hint="Visitors play this file on the website, up to 25 MB."
+                                kind="audio"
+                                folder={`songs/${s.id}`}
+                                value={s.audioUrl || ''}
+                                fileName={s.audioName}
+                                canUpload={canUpload}
+                                onChange={(url, meta) => handleSingleMedia(idx, { audioUrl: url, audioName: meta?.name || '' })}
+                                onDiscard={discardOldMedia}
+                              />
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div>
-                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Judul Lagu</label>
+                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Song Title</label>
                                 <input
                                   type="text"
                                   value={s.title}
@@ -1472,7 +1673,7 @@ export default function AdminPortal() {
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Tanggal Rilis</label>
+                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Release Date</label>
                                 <input
                                   type="text"
                                   value={s.releaseDate}
@@ -1484,7 +1685,7 @@ export default function AdminPortal() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <div>
-                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Link Spotify</label>
+                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Spotify Link</label>
                                 <input
                                   type="url"
                                   value={s.spotifyUrl}
@@ -1494,7 +1695,7 @@ export default function AdminPortal() {
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Link YouTube</label>
+                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">YouTube Link</label>
                                 <input
                                   type="url"
                                   value={s.youtubeUrl}
@@ -1504,7 +1705,7 @@ export default function AdminPortal() {
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">Link SoundCloud</label>
+                                <label className="block text-[10px] font-tech text-neutral-400 mb-1">SoundCloud Link</label>
                                 <input
                                   type="url"
                                   value={s.soundcloudUrl}
@@ -1515,7 +1716,7 @@ export default function AdminPortal() {
                             </div>
 
                             <div>
-                              <label className="block text-[10px] font-tech text-neutral-400 mb-1">Deskripsi Single</label>
+                              <label className="block text-[10px] font-tech text-neutral-400 mb-1">Single Description</label>
                               <input
                                 type="text"
                                 value={s.description}
@@ -1531,7 +1732,7 @@ export default function AdminPortal() {
                         type="submit"
                         className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                       >
-                        <Save className="w-4 h-4" /> Simpan Data Diskografi
+                        <Save className="w-4 h-4" /> Save Discography
                       </button>
                     </form>
                   )}
@@ -1541,16 +1742,16 @@ export default function AdminPortal() {
                     <form onSubmit={handleSaveContact} className="space-y-6 max-w-3xl">
                       <div>
                         <h4 className="font-bebas text-3xl text-white tracking-wide">
-                          EDIT KONTAK &amp; LINK MEDIA SOSIAL
+                          EDIT CONTACT DETAILS &amp; SOCIAL LINKS
                         </h4>
                         <p className="text-xs font-tech text-neutral-400">
-                          Perbarui kontak WhatsApp booking, email, dan link akun resmi Paranoid Noise.
+                          Update the booking WhatsApp number, email, and official Paranoid Noise account links.
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-tech text-neutral-300 mb-1">Nomor WhatsApp Tampilan</label>
+                          <label className="block text-xs font-tech text-neutral-300 mb-1">WhatsApp Number (as displayed)</label>
                           <input
                             type="text"
                             value={contactForm.whatsappDisplay}
@@ -1560,7 +1761,7 @@ export default function AdminPortal() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-tech text-neutral-300 mb-1">Nomor WhatsApp Raw (Format: 628xxxxxxxxxx)</label>
+                          <label className="block text-xs font-tech text-neutral-300 mb-1">WhatsApp Number for the link (format: 628xxxxxxxxxx)</label>
                           <input
                             type="text"
                             value={contactForm.whatsappRaw}
@@ -1571,7 +1772,7 @@ export default function AdminPortal() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-tech text-neutral-300 mb-1">Email Resmi Band</label>
+                        <label className="block text-xs font-tech text-neutral-300 mb-1">Official Band Email</label>
                         <input
                           type="email"
                           value={contactForm.email}
@@ -1582,7 +1783,7 @@ export default function AdminPortal() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-tech text-neutral-300 mb-1">URL Instagram</label>
+                          <label className="block text-xs font-tech text-neutral-300 mb-1">Instagram URL</label>
                           <input
                             type="url"
                             value={contactForm.instagram}
@@ -1592,7 +1793,7 @@ export default function AdminPortal() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-tech text-neutral-300 mb-1">URL Spotify</label>
+                          <label className="block text-xs font-tech text-neutral-300 mb-1">Spotify URL</label>
                           <input
                             type="url"
                             value={contactForm.spotify}
@@ -1604,7 +1805,7 @@ export default function AdminPortal() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-tech text-neutral-300 mb-1">URL YouTube</label>
+                          <label className="block text-xs font-tech text-neutral-300 mb-1">YouTube URL</label>
                           <input
                             type="url"
                             value={contactForm.youtube}
@@ -1614,7 +1815,7 @@ export default function AdminPortal() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-tech text-neutral-300 mb-1">URL SoundCloud</label>
+                          <label className="block text-xs font-tech text-neutral-300 mb-1">SoundCloud URL</label>
                           <input
                             type="url"
                             value={contactForm.soundcloud}
@@ -1628,7 +1829,7 @@ export default function AdminPortal() {
                         type="submit"
                         className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
                       >
-                        <Save className="w-4 h-4" /> Simpan Kontak &amp; Sosmed
+                        <Save className="w-4 h-4" /> Save Contact &amp; Social Links
                       </button>
                     </form>
                   )}
@@ -1638,36 +1839,36 @@ export default function AdminPortal() {
                     <div className="space-y-6 max-w-3xl">
                       <div>
                         <h4 className="font-bebas text-3xl text-white tracking-wide">
-                          BACKUP DATA &amp; RESET KE DEFAULT
+                          BACKUP DATA &amp; RESET TO DEFAULT
                         </h4>
                         <p className="text-xs font-tech text-neutral-400">
-                          Ekspor salinan cadangan konfigurasi website ke file JSON, atau pulihkan ke kondisi bawaan awal.
+                          Export a backup copy of the website settings to a JSON file, or restore the original defaults.
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-5 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3">
                           <Download className="w-8 h-8 text-red-500" />
-                          <h5 className="font-bebas text-2xl text-white tracking-wide">EKSPOR BACKUP JSON</h5>
+                          <h5 className="font-bebas text-2xl text-white tracking-wide">EXPORT JSON BACKUP</h5>
                           <p className="text-xs font-tech text-neutral-400">
-                            Unduh seluruh konfigurasi tema, bio, personil, gigs, dan merch dalam satu file JSON.
+                            Download the whole theme, bio, member, gig, and merch configuration as one JSON file.
                           </p>
                           <button
                             onClick={handleExportJson}
                             className="w-full py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                           >
-                            <Download className="w-4 h-4" /> Unduh File Backup
+                            <Download className="w-4 h-4" /> Download Backup File
                           </button>
                         </div>
 
                         <div className="p-5 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3">
                           <Upload className="w-8 h-8 text-neutral-400" />
-                          <h5 className="font-bebas text-2xl text-white tracking-wide">IMPOR BACKUP JSON</h5>
+                          <h5 className="font-bebas text-2xl text-white tracking-wide">IMPORT JSON BACKUP</h5>
                           <p className="text-xs font-tech text-neutral-400">
-                            Unggah file JSON backup untuk memulihkan seluruh pengaturan website.
+                            Upload a JSON backup file to restore all website settings.
                           </p>
                           <label className="w-full py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer">
-                            <Upload className="w-4 h-4" /> Pilih File JSON
+                            <Upload className="w-4 h-4" /> Choose JSON File
                             <input type="file" accept=".json" onChange={handleImportJson} className="hidden" />
                           </label>
                         </div>
@@ -1675,16 +1876,16 @@ export default function AdminPortal() {
 
                       <div className="p-5 rounded-2xl bg-red-950/40 border border-red-900/60 space-y-3">
                         <div className="flex items-center gap-2 text-red-400 font-tech font-bold text-xs uppercase">
-                          <AlertTriangle className="w-4 h-4" /> Reset Pabrik (Factory Reset)
+                          <AlertTriangle className="w-4 h-4" /> Factory Reset
                         </div>
                         <p className="text-xs font-tech text-neutral-300">
-                          Mengembalikan seluruh teks profil, daftar single lagu, personil trio, jadwal event, dan tema warna ke pengaturan asli Paranoid Noise.
+                          Restores the profile text, singles, band members, event schedule, images, and color theme to the original Paranoid Noise defaults. With the shared server mode this removes the content published for every visitor.
                         </p>
                         <button
                           onClick={handleResetDefaults}
                           className="px-6 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-2"
                         >
-                          <RotateCcw className="w-4 h-4" /> Reset ke Default Paranoid Noise
+                          <RotateCcw className="w-4 h-4" /> Reset to Paranoid Noise Defaults
                         </button>
                       </div>
                     </div>

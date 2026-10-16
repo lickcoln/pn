@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { safeFileName } from './media'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -86,11 +87,13 @@ export function isAdminUser(user) {
 
 /**
  * Read the content published from the admin portal.
- * 'ready' = site_content is reachable (config stays null until something is published),
- * 'unavailable' = Supabase is off or unreachable, or supabase-admin.sql has not been run yet.
+ * 'ready' = site_content is reachable (config stays null until something is published).
+ * 'unavailable' = Supabase is off or the content cannot be read, and reason says why:
+ * 'off' (no env vars), 'missing' (supabase-admin.sql has not been run yet) or 'network'
+ * (the server cannot be reached: offline, or blocked by an extension, VPN or network).
  */
 export async function fetchSiteContent() {
-  if (!isSupabaseConfigured || !supabase) return { status: 'unavailable', config: null }
+  if (!isSupabaseConfigured || !supabase) return { status: 'unavailable', reason: 'off', config: null }
 
   try {
     const { data, error } = await supabase
@@ -102,14 +105,15 @@ export async function fetchSiteContent() {
     if (error) throw error
     return { status: 'ready', config: data?.config ?? null }
   } catch (err) {
+    const missing = err?.code === 'PGRST205' || err?.code === '42P01'
     console.info('Shared site content unavailable, using local content:', err?.message || err)
-    return { status: 'unavailable', config: null }
+    return { status: 'unavailable', reason: missing ? 'missing' : 'network', config: null }
   }
 }
 
 async function runWrite(request) {
   if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: 'Supabase belum dikonfigurasi.' }
+    return { success: false, error: 'Supabase is not configured.' }
   }
 
   try {
@@ -119,8 +123,8 @@ async function runWrite(request) {
   } catch (err) {
     // 42501 = row level security: signed in, but without the admin role
     const message = err?.code === '42501'
-      ? 'Akun ini tidak punya izin admin untuk menyimpan.'
-      : err?.message || 'Gagal menyimpan ke server.'
+      ? 'This account does not have the admin role, so it cannot save.'
+      : err?.message || 'Could not save to the server.'
     return { success: false, error: message }
   }
 }
@@ -145,33 +149,34 @@ export function deleteSiteContent() {
 
 export async function adminSignIn(email, password) {
   if (!isSupabaseConfigured || !supabase) {
-    return { success: false, error: 'Supabase belum dikonfigurasi.' }
+    return { success: false, error: 'Supabase is not configured.' }
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) {
     const wrongLogin = /invalid login credentials/i.test(error.message)
-    return { success: false, error: wrongLogin ? 'Email atau password salah.' : error.message }
+    return { success: false, error: wrongLogin ? 'Wrong email or password.' : error.message }
   }
 
   if (!isAdminUser(data.user)) {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     return {
       success: false,
-      error: 'Akun ini belum diberi role admin. Jalankan langkah 4 di supabase-admin.sql, lalu login lagi.'
+      error: 'This account has not been given the admin role yet. Run step 4 in supabase-admin.sql, then sign in again.'
     }
   }
   return { success: true, user: data.user }
 }
 
+// scope 'local' ends only this browser's session, so signing out on the PC keeps the phone signed in
 export async function adminSignOut() {
-  if (supabase) await supabase.auth.signOut()
+  if (supabase) await supabase.auth.signOut({ scope: 'local' })
 }
 
 // Only an admin session gets rows back: RLS hides these tables from everyone else
 async function listRows(table) {
   if (!isSupabaseConfigured || !supabase) {
-    return { success: false, data: [], error: 'Supabase belum dikonfigurasi.' }
+    return { success: false, data: [], error: 'Supabase is not configured.' }
   }
 
   const { data, error } = await supabase
@@ -185,3 +190,69 @@ async function listRows(table) {
 
 export const listBookingInquiries = () => listRows('booking_inquiries')
 export const listTicketRsvps = () => listRows('ticket_rsvps')
+
+// ---------------------------------------------------------------------------
+// Uploads from the admin portal: photos and MP3 songs (needs supabase-media.sql)
+// ---------------------------------------------------------------------------
+
+export const MEDIA_BUCKET = 'site-media'
+
+function describeStorageError(err) {
+  const text = `${err?.message || ''} ${err?.statusCode || ''}`
+  if (/bucket not found/i.test(text)) {
+    return "The 'site-media' storage bucket does not exist yet. Run supabase-media.sql in the Supabase SQL Editor."
+  }
+  if (/row-level security|unauthorized|\b403\b/i.test(text)) {
+    return 'This account is not allowed to upload. Sign in with the admin account.'
+  }
+  if (/exceeded the maximum|too large|\b413\b/i.test(text)) return 'The file is too large (the limit is 25 MB).'
+  if (/mime type|\b415\b/i.test(text)) return 'This file type is not allowed.'
+  return err?.message || 'The upload failed.'
+}
+
+/**
+ * Upload a photo or an MP3 into the public site-media bucket. Every upload gets a new file name, so
+ * browsers never show an old cached copy of a replaced file. Resolves to { success, url, path } or
+ * { success: false, error }.
+ */
+export async function uploadMedia(folder, file) {
+  if (!isSupabaseConfigured || !supabase) return { success: false, error: 'Supabase is not configured.' }
+
+  const isMp3 = /\.mp3$/i.test(file.name)
+  const path = `${folder}/${Date.now()}-${safeFileName(file.name)}`
+  // The storage client sends a file with the type the browser detected (some report MP3 as
+  // audio/mp3 or nothing at all), and the bucket only accepts audio/mpeg for songs
+  const body = isMp3 && file.type !== 'audio/mpeg' ? new File([file], file.name, { type: 'audio/mpeg' }) : file
+
+  try {
+    const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, body, {
+      contentType: body.type,
+      cacheControl: '31536000',
+      upsert: false
+    })
+    if (error) throw error
+
+    const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path)
+    return { success: true, url: data.publicUrl, path }
+  } catch (err) {
+    return { success: false, error: describeStorageError(err) }
+  }
+}
+
+/** The storage path behind a public URL of the site-media bucket, or null for any other URL. */
+export function mediaPathFromUrl(url) {
+  const marker = `/object/public/${MEDIA_BUCKET}/`
+  const at = typeof url === 'string' ? url.indexOf(marker) : -1
+  return at === -1 ? null : decodeURIComponent(url.slice(at + marker.length).split('?')[0])
+}
+
+/** Best-effort cleanup of a file that is no longer used; files from other places are left alone. */
+export async function deleteMedia(url) {
+  const path = mediaPathFromUrl(url)
+  if (!path || !supabase) return
+  try {
+    await supabase.storage.from(MEDIA_BUCKET).remove([path])
+  } catch (err) {
+    console.info('Could not remove the old file:', err?.message || err)
+  }
+}

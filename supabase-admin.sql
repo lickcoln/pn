@@ -10,6 +10,7 @@
 -- user, so a visitor who signs up on their own cannot make themselves admin.
 --
 -- Until this file has been run, the website keeps working as before (admin edits stay in one browser).
+-- Next (optional): run supabase-media.sql so the admin portal can upload photos and MP3 songs.
 
 -- 1. Admin check
 CREATE OR REPLACE FUNCTION public.is_admin()
