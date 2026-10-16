@@ -18,13 +18,13 @@ export async function submitBookingInquiry(data) {
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data: result, error } = await supabase
+      // No .select(): anon only has INSERT under RLS, returning the row would need a SELECT policy
+      const { error } = await supabase
         .from('booking_inquiries')
         .insert([payload])
-        .select()
       
       if (error) throw error
-      return { success: true, mode: 'supabase', data: result }
+      return { success: true, mode: 'supabase', data: payload }
     } catch (err) {
       console.warn('Supabase booking submission failed, falling back to local:', err)
     }
@@ -49,13 +49,12 @@ export async function submitTicketRsvp(data) {
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data: result, error } = await supabase
+      const { error } = await supabase
         .from('ticket_rsvps')
         .insert([payload])
-        .select()
       
       if (error) throw error
-      return { success: true, mode: 'supabase', data: result }
+      return { success: true, mode: 'supabase', data: payload }
     } catch (err) {
       console.warn('Supabase RSVP failed, falling back to local:', err)
     }
