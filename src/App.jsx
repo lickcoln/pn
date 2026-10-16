@@ -9,6 +9,7 @@ import MerchStore from './components/MerchStore'
 import ContactBooking from './components/ContactBooking'
 import Footer from './components/Footer'
 import AdminPortal from './components/AdminPortal'
+import MobileNav from './components/MobileNav'
 import { audioEngine } from './utils/audioSynth'
 import { useBandData } from './context/BandDataContext'
 
@@ -22,7 +23,8 @@ export default function App() {
     }
   })
   const [isCartOpen, setIsCartOpen] = useState(false)
-  const [distortionActive, setDistortionActive] = useState(true)
+  // The pedal starts bypassed, so real songs sound like the recording until a visitor stomps it on
+  const [distortionActive, setDistortionActive] = useState(false)
   const [activeTrackId, setActiveTrackId] = useState(null)
 
   useEffect(() => {
@@ -75,13 +77,13 @@ export default function App() {
     if (target) {
       target.scrollIntoView({ behavior: 'smooth' })
     }
-    setActiveTrackId('mesin-waktu')
+    setActiveTrackId(config.singles[0]?.id ?? null)
   }
 
   const totalCartCount = cart.reduce((acc, i) => acc + i.quantity, 0)
 
   return (
-    <div className="min-h-screen bg-[#050505] text-neutral-100 relative selection:bg-red-700 selection:text-white">
+    <div className="min-h-screen bg-[#050505] text-neutral-100 relative selection:bg-red-700 selection:text-white pb-16 lg:pb-0">
       
       {/* Top Navbar */}
       <Navbar
@@ -129,6 +131,9 @@ export default function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Bottom tab bar for phones and tablets */}
+      <MobileNav />
 
       {/* Hidden Admin Portal at bottom-right corner */}
       <AdminPortal />

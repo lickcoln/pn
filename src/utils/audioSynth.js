@@ -1,46 +1,140 @@
-// Web Audio API Grunge Guitar Synthesizer & Stompbox Simulator
+// Web Audio engine: a synthesized guitar-riff preview, real MP3 playback, and one shared effects
+// chain (stompbox pedal + three-band equalizer). Every setting is a percentage from 0 to 100.
+//
+//   riff voices -> amp (always-on distortion) -> cab (lowpass) -> riff trim --+
+//                                                                             +-> pedal (gain) -> tone
+//   MP3 <audio> element -> media source --------------------------------------+
+//
+//   tone -> EQ (bass, mid, treble) -> analyser -> master level -> limiter -> speakers
+
+const clamp = (percent) => Math.min(100, Math.max(0, Number(percent) || 0))
+
+export const DEFAULT_AUDIO_SETTINGS = { drive: 50, tone: 75, level: 80, bass: 50, mid: 50, treble: 50 }
+
+// EQ: 0% = 12 dB cut, 50% = flat, 100% = 12 dB boost
+export const EQ_RANGE_DB = 12
+export const percentToDb = (percent) => ((clamp(percent) - 50) / 50) * EQ_RANGE_DB
+
+// TONE: 0% = dark (400 Hz), 100% = fully open (20 kHz), spaced the way the ear hears pitch
+export const toneToHz = (percent) => 400 * Math.pow(50, clamp(percent) / 100)
+
+const EQ_BANDS = {
+  bass: { type: 'lowshelf', frequency: 120 },
+  mid: { type: 'peaking', frequency: 1000, Q: 0.9 },
+  treble: { type: 'highshelf', frequency: 6000 }
+}
+
+// The pedal: soft clipping that normalizes to full scale, so it never gets louder than the input peaks
+function pedalCurve(percent) {
+  const amount = clamp(percent) / 100
+  const k = 1 + amount * amount * 60
+  const samples = 2048
+  const norm = Math.tanh(k)
+  const curve = new Float32Array(samples)
+  for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / (samples - 1) - 1
+    curve[i] = Math.tanh(k * x) / norm
+  }
+  return curve
+}
+
+// The riff's own guitar amp: heavy fixed distortion (the original curve)
+function ampCurve(amount) {
+  const k = Math.max(1, amount * 2)
+  const samples = 44100
+  const deg = Math.PI / 180
+  const curve = new Float32Array(samples)
+  for (let i = 0; i < samples; ++i) {
+    const x = (i * 2) / samples - 1
+    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x))
+  }
+  return curve
+}
 
 class AudioEngine {
   constructor() {
     this.ctx = null
-    this.masterGain = null
-    this.distortionNode = null
-    this.filterNode = null
-    this.analyser = null
-    this.isPlaying = false
+    this.settings = { ...DEFAULT_AUDIO_SETTINGS }
+    this.distortionEnabled = false // is the pedal engaged?
+    this.mode = null // 'riff' | 'song' | null
     this.currentTrackId = null
-    this.distortionEnabled = true
-    this.driveAmount = 50
+    this.isPlaying = false
     this.activeOscillators = []
     this.intervalId = null
+    this.audioEl = null
+    this.songUrl = ''
+    this.listeners = new Set()
   }
 
+  /** Listen to the MP3 player: { type: 'time' | 'state' | 'ended' | 'error', ... }. Returns an unsubscribe function. */
+  subscribe(listener) {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
+  }
+
+  emit(event) {
+    this.listeners.forEach((listener) => listener(event))
+  }
+
+  // Must run from a click or tap: browsers only start audio after a user gesture
   init() {
     if (!this.ctx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext
-      this.ctx = new AudioContext()
+      const ctx = new AudioContext()
+      this.ctx = ctx
 
-      this.masterGain = this.ctx.createGain()
-      this.masterGain.gain.value = 0.35
+      // Riff voices: guitar amp and speaker cabinet, then a trim so riffs sit at the old loudness
+      this.ampNode = ctx.createWaveShaper()
+      this.ampNode.curve = ampCurve(75)
+      this.ampNode.oversample = '4x'
+      this.cabNode = ctx.createBiquadFilter()
+      this.cabNode.type = 'lowpass'
+      this.cabNode.frequency.value = 3600
+      this.riffTrim = ctx.createGain()
+      this.riffTrim.gain.value = 0.45
 
-      // Distortion waveshaper
-      this.distortionNode = this.ctx.createWaveShaper()
-      this.updateDistortionCurve(this.driveAmount)
+      // Shared by riffs and songs
+      this.pedalNode = ctx.createWaveShaper()
+      this.pedalMakeup = ctx.createGain()
+      this.toneNode = ctx.createBiquadFilter()
+      this.toneNode.type = 'lowpass'
+      this.toneNode.Q.value = 0.707
+      this.eq = {}
+      Object.entries(EQ_BANDS).forEach(([name, band]) => {
+        const filter = ctx.createBiquadFilter()
+        filter.type = band.type
+        filter.frequency.value = band.frequency
+        if (band.Q) filter.Q.value = band.Q
+        this.eq[name] = filter
+      })
 
-      // Guitar cabinet emulation filter
-      this.filterNode = this.ctx.createBiquadFilter()
-      this.filterNode.type = 'lowpass'
-      this.filterNode.frequency.value = 3500
-
-      // Analyser for real-time visualizer
-      this.analyser = this.ctx.createAnalyser()
+      // Analyser for the real-time visualizer
+      this.analyser = ctx.createAnalyser()
       this.analyser.fftSize = 64
 
-      // Chain: Sources -> Distortion -> Filter -> Analyser -> Master Gain -> Destination
-      this.distortionNode.connect(this.filterNode)
-      this.filterNode.connect(this.analyser)
+      this.masterGain = ctx.createGain()
+      // A gentle limiter so an EQ boost cannot clip the speakers
+      this.limiter = ctx.createDynamicsCompressor()
+      this.limiter.threshold.value = -3
+      this.limiter.knee.value = 0
+      this.limiter.ratio.value = 20
+      this.limiter.attack.value = 0.003
+      this.limiter.release.value = 0.1
+
+      this.ampNode.connect(this.cabNode)
+      this.cabNode.connect(this.riffTrim)
+      this.riffTrim.connect(this.pedalNode)
+      this.pedalNode.connect(this.pedalMakeup)
+      this.pedalMakeup.connect(this.toneNode)
+      this.toneNode.connect(this.eq.bass)
+      this.eq.bass.connect(this.eq.mid)
+      this.eq.mid.connect(this.eq.treble)
+      this.eq.treble.connect(this.analyser)
       this.analyser.connect(this.masterGain)
-      this.masterGain.connect(this.ctx.destination)
+      this.masterGain.connect(this.limiter)
+      this.limiter.connect(ctx.destination)
+
+      this.applySettings()
     }
 
     if (this.ctx.state === 'suspended') {
@@ -48,19 +142,52 @@ class AudioEngine {
     }
   }
 
-  updateDistortionCurve(amount) {
-    if (!this.distortionNode) return
-    const k = Math.max(1, amount * 2)
-    const n_samples = 44100
-    const curve = new Float32Array(n_samples)
-    const deg = Math.PI / 180
+  // Pushes the stored percentages into the audio nodes (also called by init, so sliders can move before the first play)
+  applySettings() {
+    if (!this.ctx) return
+    const now = this.ctx.currentTime
+    const { drive, tone, level, bass, mid, treble } = this.settings
+    const engaged = this.distortionEnabled
 
-    for (let i = 0; i < n_samples; ++i) {
-      const x = (i * 2) / n_samples - 1
-      curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x))
+    if (engaged && drive > 0) {
+      this.pedalNode.curve = pedalCurve(drive)
+      this.pedalNode.oversample = '4x'
+      this.pedalMakeup.gain.setTargetAtTime(1 / (1 + 1.5 * (drive / 100)), now, 0.015)
+    } else {
+      this.pedalNode.curve = null // bypass: the signal passes through untouched
+      this.pedalNode.oversample = 'none'
+      this.pedalMakeup.gain.setTargetAtTime(1, now, 0.015)
     }
-    this.distortionNode.curve = curve
-    this.distortionNode.oversample = '4x'
+
+    this.toneNode.frequency.setTargetAtTime(engaged ? toneToHz(tone) : 20000, now, 0.015)
+    this.eq.bass.gain.setTargetAtTime(percentToDb(bass), now, 0.015)
+    this.eq.mid.gain.setTargetAtTime(percentToDb(mid), now, 0.015)
+    this.eq.treble.gain.setTargetAtTime(percentToDb(treble), now, 0.015)
+    this.masterGain.gain.setTargetAtTime(clamp(level) / 100, now, 0.015)
+  }
+
+  getSettings() {
+    return { ...this.settings }
+  }
+
+  /** name: 'drive' | 'tone' | 'level' | 'bass' | 'mid' | 'treble', value: 0-100 */
+  setSetting(name, value) {
+    if (!(name in this.settings)) return
+    this.settings[name] = clamp(value)
+    this.applySettings()
+  }
+
+  setSettings(values) {
+    Object.entries(values || {}).forEach(([name, value]) => {
+      if (name in this.settings) this.settings[name] = clamp(value)
+    })
+    this.applySettings()
+  }
+
+  // Footswitch: engage or bypass the pedal (gain and tone)
+  setDistortionEnabled(enabled) {
+    this.distortionEnabled = enabled
+    this.applySettings()
   }
 
   // Realistic mechanical footswitch click
@@ -82,25 +209,6 @@ class AudioEngine {
 
     osc.start(now)
     osc.stop(now + 0.09)
-  }
-
-  setDrive(amount) {
-    this.driveAmount = amount
-    this.updateDistortionCurve(amount)
-  }
-
-  setVolume(vol) {
-    if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(vol * 0.4, this.ctx.currentTime)
-    }
-  }
-
-  setDistortionEnabled(enabled) {
-    this.distortionEnabled = enabled
-    this.updateDistortionCurve(enabled ? this.driveAmount : 1)
-    if (this.filterNode && this.ctx) {
-      this.filterNode.frequency.setValueAtTime(enabled ? 3600 : 7000, this.ctx.currentTime)
-    }
   }
 
   // Play a powerful rock chord (Root, 5th, Octave)
@@ -125,7 +233,7 @@ class AudioEngine {
       oscGain.gain.exponentialRampToValueAtTime(0.005, now + duration)
 
       osc.connect(oscGain)
-      oscGain.connect(this.distortionNode)
+      oscGain.connect(this.ampNode)
 
       osc.start(now)
       osc.stop(now + duration)
@@ -133,10 +241,11 @@ class AudioEngine {
     })
   }
 
-  // Play a looped grunge punk riff for a track
+  // Play a looped grunge punk riff for a track (the preview used when a single has no MP3 yet)
   playTrackRiff(trackId, riffType) {
     this.stop()
     this.init()
+    this.mode = 'riff'
     this.isPlaying = true
     this.currentTrackId = trackId
 
@@ -168,17 +277,82 @@ class AudioEngine {
     }, beatTime)
   }
 
-  stop() {
+  // One <audio> element for every song, routed through the same effects chain as the riffs
+  ensureSongElement() {
+    if (this.audioEl) return this.audioEl
+
+    const el = new Audio()
+    // Needed so the Web Audio graph may read the file (the storage server allows it)
+    el.crossOrigin = 'anonymous'
+    el.preload = 'auto'
+
+    const time = () => this.emit({ type: 'time', current: el.currentTime, duration: Number.isFinite(el.duration) ? el.duration : 0 })
+    el.addEventListener('timeupdate', time)
+    el.addEventListener('loadedmetadata', time)
+    el.addEventListener('play', () => this.emit({ type: 'state', playing: true }))
+    el.addEventListener('pause', () => this.emit({ type: 'state', playing: false }))
+    el.addEventListener('ended', () => {
+      this.isPlaying = false
+      this.emit({ type: 'ended' })
+    })
+    el.addEventListener('error', () => {
+      this.isPlaying = false
+      this.emit({ type: 'error' })
+    })
+
+    this.mediaSource = this.ctx.createMediaElementSource(el)
+    this.mediaSource.connect(this.pedalNode)
+    this.audioEl = el
+    return el
+  }
+
+  /** Play an MP3 from the start, or resume it when it is the same song and was paused. Rejects when the browser refuses to play. */
+  async playSong(trackId, url) {
+    this.stopRiff()
+    this.init()
+    const el = this.ensureSongElement()
+
+    // A new song, or the same one after a failed load, is (re)loaded; otherwise this resumes where it paused
+    if (this.songUrl !== url || el.error) {
+      this.songUrl = url
+      el.src = url
+    }
+    this.mode = 'song'
+    this.currentTrackId = trackId
+
+    await el.play()
+    this.isPlaying = true
+  }
+
+  pauseSong() {
+    if (this.audioEl) this.audioEl.pause()
     this.isPlaying = false
-    this.currentTrackId = null
+  }
+
+  seek(seconds) {
+    if (this.audioEl && Number.isFinite(seconds)) this.audioEl.currentTime = Math.max(0, seconds)
+  }
+
+  stopRiff() {
     if (this.intervalId) {
       clearInterval(this.intervalId)
       this.intervalId = null
     }
     this.activeOscillators.forEach(osc => {
-      try { osc.stop() } catch (e) {}
+      try { osc.stop() } catch { /* already stopped */ }
     })
     this.activeOscillators = []
+  }
+
+  // Stops whatever is playing: the riff loop, or the song (rewound to the start)
+  stop() {
+    this.isPlaying = false
+    this.currentTrackId = null
+    this.stopRiff()
+    if (this.audioEl) {
+      this.audioEl.pause()
+      this.audioEl.currentTime = 0
+    }
   }
 
   getByteFrequencyData(array) {
