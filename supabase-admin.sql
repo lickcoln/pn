@@ -98,9 +98,12 @@ CREATE POLICY "Admin can read ticket rsvps"
   USING ((SELECT public.is_admin()));
 
 -- 4. Make your admin user (do this part by hand, it is intentionally commented out)
---    a. Dashboard -> Authentication -> Users -> Add user: enter your email + a strong password
---       (tick "Auto Confirm User"). Also turn off "Allow new users to sign up" under
---       Authentication -> Sign In / Providers, so nobody else can create accounts.
+--    a. Dashboard -> Authentication -> Users -> Add user: enter an email you control (Supabase
+--       signs in with an email, not a username) and a NEW strong password, then tick
+--       "Auto Confirm User". Do not reuse the local-mode login hardcoded in AdminPortal.jsx: it is
+--       public, and here it would let anyone read your visitors' contact details and edit the site.
+--       Also turn off "Allow new users to sign up" under Authentication -> Sign In / Providers,
+--       so nobody else can create accounts.
 --    b. Replace the email below with the one from step a, uncomment, and run it on its own.
 --       Do not commit your real email to the repository.
 --    c. Log out and in again on the website so the new role is in your login token.
