@@ -1,4 +1,5 @@
-// Paranoid Noise Band Data
+// Paranoid Noise Band Data: the default content of the website.
+// Anything an admin edits is saved on top of these defaults (see BandDataContext).
 
 export const BAND_BIO = `Paranoid Noise is a punk rock trio that has been making waves in Jakarta, Indonesia's alternative rock scene. Known for their raw energy and explosive performances, they captured essence of the alternative rock movement while it with the unique spirit of Indonesian underground. The band's sound is rooted in the gritty, distortion-heavy guitar riffs of Nirvana and Seattle sound, layered with the deep emotional intensity and explosive rhythms reminiscent oh the 90's grunge scene. Their music speaks to the struggles, frustation and emotional volality of today's youth, with lyrics that explore themes of allenation, rebelion and self-doubt. Paranoid Noise quickly gained attention after their debut show in Bekasi-Jakarta-Bandung's underground venues, delivering electrifying perfomances that have earned them a loyal following. Their sound is powerful, chaotic and unapologetic, and they've played countless gigs across the country, from small clubs to bigger festival stages, building a reputation as one of the most dynamic live acts in the scene today.`
 
@@ -10,8 +11,8 @@ export const BAND_MEMBERS = [
     image: '/band/member_arief.png',
     fallbackImage: '/band/band_rock_4_1270x1526.png',
     gear: 'Fender Jaguar / Kurt Cobain Signature, Boss DS-1 Distortion, EHX Big Muff',
-    description: 'Frontman dengan vokal serak penuh emosi dan riff gitar bervolume tinggi yang dipenuhi fuzz & distorsi khas Seattle grunge 90an.',
-    quote: 'Musik kami adalah ekspresi dari amarah, keresahan, dan kebebasan tanpa kompromi.'
+    description: 'Frontman with a raspy, emotional voice and loud guitar riffs drenched in the fuzz and distortion of 90s Seattle grunge.',
+    quote: 'Our music is an expression of anger, restlessness, and uncompromising freedom.'
   },
   {
     id: 'ganjar',
@@ -20,8 +21,8 @@ export const BAND_MEMBERS = [
     image: '/band/member_ganjar.png',
     fallbackImage: '/band/band_rock_8_1254x1254.png',
     gear: 'Fender Jazz Bass, Ampeg SVT Classic, SansAmp Bass Driver DI',
-    description: 'Rendaman bassline punk yang padat, agresif, dan menggelegar, menjadi pondasi kokoh untuk dinamika musik Paranoid Noise.',
-    quote: 'Di panggung, tidak ada batasan antara kami dan energi moshpit.'
+    description: "Dense, aggressive, thunderous punk basslines that form the solid foundation of Paranoid Noise's dynamics.",
+    quote: 'On stage, there is no barrier between us and the energy of the moshpit.'
   },
   {
     id: 'kimao',
@@ -30,8 +31,8 @@ export const BAND_MEMBERS = [
     image: '/band/member_kimao.png',
     fallbackImage: '/band/band_rock_1_1252x741.png',
     gear: 'Mapex Drum Kit, Zildjian Sweet Ride & A-Custom Cymbals, Heavy Punk Sticks',
-    description: 'Pukulan drum eksplosif, tempo menghentak, dan hentakan tanpa jeda yang menggerakkan adrenalin setiap penampilan live.',
-    quote: 'Ketukan drum adalah detak jantung dari setiap kekacauan yang kami ciptakan.'
+    description: 'Explosive drumming, pounding tempos, and nonstop hits that pump adrenaline into every live show.',
+    quote: 'The drumbeat is the heartbeat of every bit of chaos we create.'
   }
 ]
 
@@ -39,12 +40,12 @@ export const SINGLES_DISCOGRAPHY = [
   {
     id: 'mesin-waktu',
     title: 'Mesin Waktu',
-    releaseDate: 'Januari 2021',
+    releaseDate: 'January 2021',
     year: '2021',
     duration: '3:45',
     color: '#dc2626',
     coverArt: '/images/band_photo_17_1792x1024.jpg',
-    description: 'Single debut yang memperkenalkan sentuhan grunge klasik dengan distorsi modern, langsung menjadi favorit para pendengar underground.',
+    description: 'The debut single that introduced a classic grunge feel with modern distortion and became an instant favorite among underground listeners.',
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20Mesin%20Waktu',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+Mesin+Waktu',
     soundcloudUrl: 'https://soundcloud.com/search?q=Paranoid%20Noise%20Mesin%20Waktu',
@@ -53,12 +54,12 @@ export const SINGLES_DISCOGRAPHY = [
   {
     id: 'diamkan-aku',
     title: 'Diamkan Aku',
-    releaseDate: 'Januari 2022',
+    releaseDate: 'January 2022',
     year: '2022',
     duration: '3:18',
     color: '#0284c7',
     coverArt: '/band/band_rock_2_1247x690.png',
-    description: 'Eksplorasi emosi mendalam tentang rasa ingin menyendiri dan kejenuhan terhadap kebisingan dunia sekitar.',
+    description: 'A deep exploration of the urge to be alone and the weariness of the noise of the world around us.',
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20Diamkan%20Aku',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+Diamkan+Aku',
     soundcloudUrl: 'https://soundcloud.com/search?q=Paranoid%20Noise%20Diamkan%20Aku',
@@ -67,12 +68,12 @@ export const SINGLES_DISCOGRAPHY = [
   {
     id: 'i-dont-surrender',
     title: "I Don't Surrender",
-    releaseDate: 'Maret 2022',
+    releaseDate: 'March 2022',
     year: '2022',
     duration: '2:56',
     color: '#16a34a',
     coverArt: '/band/band_rock_3_1269x1269.png',
-    description: 'Himne pemberontakan berkecepatan tinggi dengan tempo punk rock cepat dan teriakan semangat pantang menyerah.',
+    description: 'A high-speed anthem of rebellion with a fast punk rock tempo and shouts of never giving up.',
     spotifyUrl: "https://open.spotify.com/search/Paranoid%20Noise%20I%20Don't%20Surrender",
     youtubeUrl: "https://youtube.com/results?search_query=Paranoid+Noise+I+Don't+Surrender",
     soundcloudUrl: "https://soundcloud.com/search?q=Paranoid%20Noise%20I%20Don't%20Surrender",
@@ -86,7 +87,7 @@ export const SINGLES_DISCOGRAPHY = [
     duration: '4:12',
     color: '#ea580c',
     coverArt: '/singles/single_obj_215_213x236.jpg',
-    description: 'Nuansa Seattle sound yang berat dan gelap, mengangkat luka batin, kegelisahan batin, dan konflik emosional generasi muda.',
+    description: "A heavy, dark Seattle-sound mood about inner wounds, restlessness, and the emotional conflicts of today's youth.",
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20Aku%20Trauma',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+Aku+Trauma',
     soundcloudUrl: 'https://soundcloud.com/search?q=Paranoid%20Noise%20Aku%20Trauma',
@@ -95,12 +96,12 @@ export const SINGLES_DISCOGRAPHY = [
   {
     id: 'on-antarctica',
     title: 'On Antarctica',
-    releaseDate: 'Mei 2022',
+    releaseDate: 'May 2022',
     year: '2022',
     duration: '3:50',
     color: '#38bdf8',
     coverArt: '/band/band_rock_1_1252x741.png',
-    description: 'Lagu favorit live sets dengan dinamika sunyi lalu meledak (quiet-loud dynamic) ala Nirvana In Utero.',
+    description: "A live-set favorite with a quiet-then-explosive (quiet-loud) dynamic in the style of Nirvana's In Utero.",
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20On%20Antarctica',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+On+Antarctica',
     soundcloudUrl: 'https://soundcloud.com/search?q=Paranoid%20Noise%20On%20Antarctica',
@@ -109,12 +110,12 @@ export const SINGLES_DISCOGRAPHY = [
   {
     id: 'pengkhianat',
     title: 'Pengkhianat',
-    releaseDate: 'Juli 2022',
+    releaseDate: 'July 2022',
     year: '2022',
     duration: '2:44',
     color: '#991b1b',
     coverArt: '/logo.png',
-    description: 'Single agresif dengan lirik tajam menguliti kemunafikan, dipacu ketukan drum cepat dan distorsi overdrive kencang.',
+    description: 'An aggressive single with sharp lyrics that strip away hypocrisy, driven by fast drumming and loud overdrive distortion.',
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20Pengkhianat',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+Pengkhianat',
     soundcloudUrl: 'https://soundcloud.com/search?q=Paranoid%20Noise%20Pengkhianat',
@@ -123,12 +124,12 @@ export const SINGLES_DISCOGRAPHY = [
   {
     id: 'ive-got-my-vision',
     title: "I've Got My Vision",
-    releaseDate: 'Oktober 2022',
+    releaseDate: 'October 2022',
     year: '2022',
     duration: '3:32',
     color: '#9333ea',
     coverArt: '/band/band_rock_9_1264x840.png',
-    description: 'Kombinasi melodi gitar adiktif dan lirik pencarian jati diri yang menjadi anthem crowd-surfing di panggung festival.',
+    description: 'A mix of addictive guitar melodies and lyrics about finding yourself that became a crowd-surfing anthem on festival stages.',
     spotifyUrl: "https://open.spotify.com/search/Paranoid%20Noise%20I've%20Got%20My%20Vision",
     youtubeUrl: "https://youtube.com/results?search_query=Paranoid+Noise+I've+Got+My+Vision",
     soundcloudUrl: "https://soundcloud.com/search?q=Paranoid%20Noise+I've+Got+My+Vision",
@@ -140,15 +141,15 @@ export const TOUR_EVENTS = [
   {
     id: 'gig-1',
     title: 'Jakarta Distortion Night 2026',
-    date: '24 OKTOBER 2026',
+    date: '24 OCTOBER 2026',
     time: '19:30 WIB',
     venue: 'Rossi Musik Fatmawati',
-    city: 'Jakarta Selatan',
+    city: 'South Jakarta',
     category: 'Club Gig',
-    status: 'Tiket Tersedia',
-    price: 'Rp 65.000',
+    status: 'Tickets Available',
+    price: 'IDR 65,000',
     mapsUrl: 'https://maps.google.com/?q=Rossi+Musik+Fatmawati+Jakarta',
-    description: 'Show intim bersama unit grunge & punk rock underground Jakarta. Moshpit dipastikan membara!'
+    description: "An intimate show with Jakarta's underground grunge & punk rock acts. The moshpit is guaranteed to burn!"
   },
   {
     id: 'gig-2',
@@ -159,9 +160,9 @@ export const TOUR_EVENTS = [
     city: 'Bandung',
     category: 'Festival',
     status: 'Presale 1',
-    price: 'Rp 85.000',
+    price: 'IDR 85,000',
     mapsUrl: 'https://maps.google.com/?q=Gudang+Selatan+Bandung',
-    description: 'Panggung akbar rock alternatif dan hardcore punk Kota Kembang. Paranoid Noise main jam 20:45.'
+    description: 'A big stage for alternative rock and hardcore punk in Bandung, the "City of Flowers". Paranoid Noise plays at 20:45.'
   },
   {
     id: 'gig-3',
@@ -172,34 +173,34 @@ export const TOUR_EVENTS = [
     city: 'Bekasi',
     category: 'Showcase',
     status: 'Limited Tickets',
-    price: 'Rp 50.000',
+    price: 'IDR 50,000',
     mapsUrl: 'https://maps.google.com/?q=Bekasi+Underground+Space',
-    description: 'Kembali ke akar panggung pertama Paranoid Noise. Eksklusif hanya untuk 200 penonton.'
+    description: "Back to the roots of Paranoid Noise's very first stage. Exclusive to only 200 people."
   },
   {
     id: 'gig-4',
     title: 'Sonic Subversion Rockfest Vol. 4',
-    date: '12 DESEMBER 2026',
+    date: '12 DECEMBER 2026',
     time: '15:00 WIB',
     venue: 'Stadion Patriot Candrabhaga Outer',
-    city: 'Jabodetabek',
+    city: 'Greater Jakarta',
     category: 'Festival',
     status: 'Coming Soon',
-    price: 'Rp 120.000',
+    price: 'IDR 120,000',
     mapsUrl: 'https://maps.google.com/?q=Stadion+Patriot+Bekasi',
-    description: 'Festival akbar penutup tahun dengan deretan band punk, grunge, dan rock alternatif nasional.'
+    description: 'A grand year-end festival with a lineup of national punk, grunge, and alternative rock bands.'
   },
   {
     id: 'gig-past-1',
     title: 'Authenticity Live Experience',
-    date: '18 MARET 2024',
+    date: '18 MARCH 2024',
     time: '20:00 WIB',
     venue: 'Hard Rock Cafe Stage',
     city: 'Jakarta',
     category: 'Past Gig',
-    status: 'Selesai (Sold Out)',
+    status: 'Finished (Sold Out)',
     price: 'Sold Out',
-    description: 'Penampilan memukau di panggung Authenticity bersama musisi rock terkemuka tanah air.'
+    description: 'A stunning performance on the Authenticity stage alongside leading Indonesian rock musicians.'
   }
 ]
 
@@ -208,67 +209,67 @@ export const MERCH_ITEMS = [
     id: 'merch-tshirt-1',
     name: 'PN "Stompbox Distortion" Vintage Washed T-Shirt',
     price: 185000,
-    priceFormatted: 'Rp 185.000',
+    priceFormatted: 'IDR 185,000',
     category: 'Apparel',
     image: '/logo.png',
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    stock: 'Tersedia',
-    description: 'Heavyweight cotton 24s vintage wash dengan sablon discharge logo pedal stombox Paranoid Noise di bagian depan dan lirik di belakang.'
+    stock: 'In Stock',
+    description: 'Heavyweight 24s cotton with a vintage wash, a discharge-printed Paranoid Noise stompbox pedal logo on the front and lyrics on the back.'
   },
   {
     id: 'merch-hoodie-1',
     name: 'PN "Seattle Sound Jakarta" Heavy Pullover Hoodie',
     price: 375000,
-    priceFormatted: 'Rp 375.000',
+    priceFormatted: 'IDR 375,000',
     category: 'Apparel',
     image: '/band/band_rock_8_1254x1254.png',
     sizes: ['M', 'L', 'XL', 'XXL'],
-    stock: 'Tersedia',
-    description: 'Fleece 330gsm tebal warna washed black dengan bordir logo Paranoid Noise di dada dan sablon grafis rock di lengan.'
+    stock: 'In Stock',
+    description: 'Thick 330gsm fleece in washed black, with an embroidered Paranoid Noise logo on the chest and rock graphics printed on the sleeves.'
   },
   {
     id: 'merch-cassette',
     name: 'PN "Singles Collection 2021-2022" Limited Cassette Tape',
     price: 150000,
-    priceFormatted: 'Rp 150.000',
+    priceFormatted: 'IDR 150,000',
     category: 'Physical Audio',
     image: '/images/band_photo_17_1792x1024.jpg',
     sizes: ['One Size'],
-    stock: 'Sisa 25 Pcs',
-    description: 'Kaset pita transparan merah darah limited edition berisi 7 single resmi Paranoid Noise, lengkap dengan lyric booklet poster.'
+    stock: 'Only 25 Left',
+    description: 'A limited-edition blood-red transparent cassette tape with the 7 official Paranoid Noise singles, complete with a lyric booklet poster.'
   },
   {
     id: 'merch-cap',
     name: 'PN "Raw Noise" Distressed Trucker Cap',
     price: 135000,
-    priceFormatted: 'Rp 135.000',
+    priceFormatted: 'IDR 135,000',
     category: 'Headwear',
     image: '/band/member_arief.png',
     sizes: ['All Size Snapback'],
-    stock: 'Tersedia',
-    description: 'Topi trucker bergaya grunge dengan patch bordir stompbox Paranoid Noise dan aksen distressed punk rock.'
+    stock: 'In Stock',
+    description: 'A grunge-style trucker cap with an embroidered Paranoid Noise stompbox patch and distressed punk rock accents.'
   },
   {
     id: 'merch-pick-set',
     name: 'PN Stompbox Enamel Pin & Tortex Guitar Pick Collector Pack',
     price: 75000,
-    priceFormatted: 'Rp 75.000',
+    priceFormatted: 'IDR 75,000',
     category: 'Accessories',
     image: '/logo.png',
     sizes: ['Pack of 5 Picks + 1 Pin'],
-    stock: 'Tersedia',
-    description: 'Set pin logam enamel premium berbentuk pedal stompbox PN dan 5 buah pick gitar custom 1.0mm heavy punk gauge.'
+    stock: 'In Stock',
+    description: 'A premium enamel metal pin shaped like the PN stompbox pedal, plus 5 custom 1.0mm heavy punk gauge guitar picks.'
   },
   {
     id: 'merch-stickers',
     name: 'PN "Underground Rebellion" Vinyl Sticker Pack (10 Pcs)',
     price: 45000,
-    priceFormatted: 'Rp 45.000',
+    priceFormatted: 'IDR 45,000',
     category: 'Accessories',
     image: '/band/band_rock_10_1270x763.png',
     sizes: ['10 Die-cut Stickers'],
-    stock: 'Tersedia',
-    description: 'Paket stiker vinil tahan air dan tahan gores untuk ditempel di gitar, helm, laptop, skateboard, dan pedalboard.'
+    stock: 'In Stock',
+    description: 'A waterproof, scratch-resistant vinyl sticker pack for your guitar, helmet, laptop, skateboard, and pedalboard.'
   }
 ]
 
@@ -285,3 +286,83 @@ export const BAND_CONTACT = {
   soundcloud: 'https://soundcloud.com/paranoidnoise',
   soundcloudHandle: 'Paranoid Noise'
 }
+
+// Every site-wide image the admin portal can replace, with the defaults shipped in /public.
+// Photos that belong to a list item live on the item itself: a member's image, a single's coverArt,
+// a merch product's image.
+export const IMAGE_SLOTS = [
+  {
+    key: 'logo',
+    group: 'Logo',
+    label: 'Band logo',
+    where: 'Navbar, hero stompbox, footer, admin panel and the browser tab icon',
+    fallback: '/logo.png',
+    maxEdge: 800
+  },
+  {
+    key: 'heroBackground',
+    group: 'Backgrounds',
+    label: 'Hero background',
+    where: 'Full-screen background behind the headline on the home page',
+    fallback: '/band/band_rock_9_1264x840.png',
+    maxEdge: 2000
+  },
+  {
+    key: 'discographyBackground',
+    group: 'Backgrounds',
+    label: 'Music section background',
+    where: 'Faded background behind the singles and the stompbox player',
+    fallback: '/images/band_photo_17_1792x1024.jpg',
+    maxEdge: 2000
+  },
+  {
+    key: 'lineupBanner',
+    group: 'Photos',
+    label: 'Lineup banner',
+    where: 'Wide band photo at the top of the Lineup section',
+    fallback: '/band/band_rock_8_1254x1254.png',
+    maxEdge: 1800
+  },
+  {
+    key: 'profileBanner',
+    group: 'Photos',
+    label: 'Profile stage banner',
+    where: 'Wide strip under the bio in the About section',
+    fallback: '/band/band_rock_10_1270x763.png',
+    maxEdge: 1600
+  },
+  {
+    key: 'profilePortrait',
+    group: 'Photos',
+    label: 'Profile live photo',
+    where: 'Large photo next to the bio in the About section',
+    fallback: '/band/band_rock_3_1269x1269.png',
+    maxEdge: 1400
+  },
+  {
+    key: 'profileTileLeft',
+    group: 'Photos',
+    label: 'Profile tile (left)',
+    where: 'The "Marshall Stacks & Fuzz" tile in the About section',
+    fallback: '/band/band_rock_7_1269x1267.png',
+    maxEdge: 1000
+  },
+  {
+    key: 'profileTileRight',
+    group: 'Photos',
+    label: 'Profile tile (right)',
+    where: 'The "Mapex Drums & Seattle Riffs" tile in the About section',
+    fallback: '/band/band_rock_2_1247x690.png',
+    maxEdge: 1000
+  },
+  {
+    key: 'pressKit',
+    group: 'Downloads',
+    label: 'Press kit image',
+    where: 'The file visitors get from "Download Technical Rider & EPK" in the Booking section',
+    fallback: '/band/band_rock_8_1254x1254.png',
+    maxEdge: 2400
+  }
+]
+
+export const SITE_IMAGES = Object.fromEntries(IMAGE_SLOTS.map((slot) => [slot.key, slot.fallback]))

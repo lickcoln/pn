@@ -48,20 +48,20 @@ export default function Personnel() {
               color: currentTheme.primaryColor
             }}
           >
-            <Flame className="w-3.5 h-3.5" style={{ color: currentTheme.primaryColor }} /> LINEUP PERSONIL
+            <Flame className="w-3.5 h-3.5" style={{ color: currentTheme.primaryColor }} /> BAND LINEUP
           </div>
           <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
             THE <span style={{ color: currentTheme.primaryColor }}>PUNK ROCK TRIO</span>
           </h2>
           <p className="font-tech text-sm text-neutral-400 mt-2">
-            Tiga pilar di balik kekacauan sonik dan ledakan energi Paranoid Noise di atas panggung.
+            The three pillars behind the sonic chaos and explosive stage energy of Paranoid Noise.
           </p>
         </div>
 
         {/* Full Band Lineup Portrait Banner */}
         <div className="relative mb-16 rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl group max-w-5xl mx-auto">
           <img
-            src="/band/band_rock_8_1254x1254.png"
+            src={config.images.lineupBanner}
             alt="Paranoid Noise Trio"
             className="w-full h-80 sm:h-96 md:h-[460px] object-cover object-center filter grayscale contrast-125 brightness-90 group-hover:scale-102 transition-transform duration-700"
           />
@@ -108,7 +108,7 @@ export default function Personnel() {
                     alt={member.name}
                     className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => {
-                      e.target.src = member.fallbackImage || '/logo.png'
+                      e.target.src = member.fallbackImage || config.images.logo
                     }}
                   />
                   
@@ -123,7 +123,7 @@ export default function Personnel() {
                     <button
                       onClick={() => handleTestInstrument(member.id)}
                       className="p-1.5 rounded-md bg-neutral-900 border border-neutral-700 hover:border-white text-white transition-colors cursor-pointer"
-                      title={`Dengarkan suara instrumen ${member.name}`}
+                      title={`Hear ${member.name}'s instrument`}
                     >
                       <Volume2 className="w-3.5 h-3.5" style={{ color: currentTheme.primaryColor }} />
                     </button>

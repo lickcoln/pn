@@ -5,31 +5,31 @@ import { useBandData } from '../context/BandDataContext'
 
 export default function BandProfile() {
   const { config, currentTheme } = useBandData()
-  const { bio } = config
+  const { bio, images } = config
 
   const sonicPillars = [
     {
       title: 'Gritty Distortion Riffs',
       subtitle: 'Nirvana & Seattle Sound',
-      desc: 'Riff gitar sarat distorsi dan fuzz tebal yang berakar pada tradisi alternative rock 90-an.',
+      desc: 'Guitar riffs heavy with distortion and thick fuzz, rooted in the alternative rock tradition of the 90s.',
       icon: Flame
     },
     {
       title: 'Explosive Grunge Rhythms',
       subtitle: 'Deep Emotional Intensity',
-      desc: 'Hentakan drum menggelegar dan ritme dinamis yang mencengkeram emosi penonton dari awal hingga akhir.',
+      desc: "Thundering drums and dynamic rhythms that grip the crowd's emotions from start to finish.",
       icon: Zap
     },
     {
       title: 'Indonesian Underground Spirit',
       subtitle: 'Bekasi - Jakarta - Bandung',
-      desc: 'Ditempa di panggung-panggung independen, gig klub sempit hingga panggung festival bergengsi.',
+      desc: 'Forged on independent stages, from cramped club gigs to prestigious festival stages.',
       icon: MapPin
     },
     {
       title: 'Alienation & Rebellion',
       subtitle: 'Raw Youth Vulnerability',
-      desc: 'Lirik tanpa kompromi yang menyuarakan keresahan batin, alienasi, dan keraguan diri generasi muda.',
+      desc: "Uncompromising lyrics that give voice to the inner turmoil, alienation, and self-doubt of today's youth.",
       icon: Music
     }
   ]
@@ -57,14 +57,14 @@ export default function BandProfile() {
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: currentTheme.primaryColor }}
               />{' '}
-              PROFIL &amp; SEJARAH BAND
+              BAND PROFILE &amp; HISTORY
             </div>
             <h2 className="font-bebas text-4xl sm:text-6xl md:text-7xl tracking-wider text-white">
               ABOUT <span style={{ color: currentTheme.primaryColor }}>PARANOID NOISE</span>
             </h2>
           </div>
           <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
-            Unit punk rock &amp; 90’s grunge trio asal Jakarta yang menyulut panggung underground dengan energi mentah dan distorsi tanpa ampun.
+            A punk rock &amp; 90’s grunge trio from Jakarta, setting the underground stage on fire with raw energy and merciless distortion.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function BandProfile() {
             {/* Stage Montage Banner */}
             <div className="relative rounded-xl overflow-hidden border border-neutral-800 group">
               <img
-                src="/band/band_rock_10_1270x763.png"
+                src={images.profileBanner}
                 alt="Paranoid Noise Gig Montage"
                 className="w-full h-48 object-cover filter grayscale contrast-125 brightness-75 group-hover:scale-105 group-hover:brightness-90 transition-all duration-500"
               />
@@ -151,7 +151,7 @@ export default function BandProfile() {
             {/* Live Trio Stage Photo */}
             <div className="relative rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl group">
               <img
-                src="/band/band_rock_3_1269x1269.png"
+                src={images.profilePortrait}
                 alt="Paranoid Noise Live on Stage"
                 className="w-full h-auto object-cover filter grayscale contrast-125 group-hover:contrast-100 transition-all duration-500"
               />
@@ -163,7 +163,7 @@ export default function BandProfile() {
                   EXPLOSIVE LIVE ENERGY
                 </span>
                 <span className="font-tech text-xs text-neutral-300">
-                  Arief, Ganjar, &amp; Kimao menghajar panggung tanpa kompromi.
+                  Arief, Ganjar, &amp; Kimao tear up the stage without compromise.
                 </span>
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function BandProfile() {
             <div className="grid grid-cols-2 gap-4">
               <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-36">
                 <img
-                  src="/band/band_rock_7_1269x1267.png"
+                  src={images.profileTileLeft}
                   alt="Marshall Amplifiers Gear"
                   className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-110 transition-transform duration-500"
                 />
@@ -183,7 +183,7 @@ export default function BandProfile() {
 
               <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-36">
                 <img
-                  src="/band/band_rock_2_1247x690.png"
+                  src={images.profileTileRight}
                   alt="Rehearsal Jam Room"
                   className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-110 transition-transform duration-500"
                 />

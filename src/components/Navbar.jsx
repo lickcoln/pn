@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ShoppingBag, Radio, Volume2, VolumeX, Flame } from 'lucide-react'
 import { audioEngine } from '../utils/audioSynth'
+import { useBandData } from '../context/BandDataContext'
 
 export default function Navbar({ cartCount, onOpenCart, distortionActive, onToggleDistortion }) {
+  const { config } = useBandData()
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -16,12 +18,12 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
   }, [])
 
   const navLinks = [
-    { name: 'PROFIL', href: '#profile' },
-    { name: 'PERSONIL', href: '#personnel' },
+    { name: 'PROFILE', href: '#profile' },
+    { name: 'LINEUP', href: '#personnel' },
     { name: 'DISCOGRAPHY', href: '#discography' },
-    { name: 'JADWAL GIGS', href: '#gigs' },
+    { name: 'GIGS', href: '#gigs' },
     { name: 'MERCHANDISE', href: '#merch' },
-    { name: 'BOOKING & KONTAK', href: '#booking' }
+    { name: 'BOOKING & CONTACT', href: '#booking' }
   ]
 
   const handleLinkClick = (e, href) => {
@@ -52,7 +54,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
           >
             <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden border border-neutral-700 bg-neutral-900/80 p-0.5 group-hover:border-red-600 transition-colors">
               <img
-                src="/logo.png"
+                src={config.images.logo}
                 alt="Paranoid Noise Logo"
                 className="w-full h-full object-contain filter drop-shadow group-hover:scale-105 transition-transform"
               />
@@ -115,8 +117,8 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
             <button
               onClick={onOpenCart}
               className="relative p-2 rounded-lg bg-neutral-900/80 border border-neutral-800 hover:border-red-600/70 text-neutral-300 hover:text-white transition-colors"
-              title="Keranjang Merchandise"
-              aria-label="Buka Keranjang"
+              title="Merchandise Cart"
+              aria-label="Open cart"
             >
               <ShoppingBag className="w-5 h-5" />
               {cartCount > 0 && (
@@ -164,7 +166,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
 
               {/* Mobile Stompbox FX Button */}
               <div className="pt-2 border-t border-neutral-900 flex items-center justify-between px-3">
-                <span className="text-xs font-tech text-neutral-400 uppercase">Gitar Overdrive FX:</span>
+                <span className="text-xs font-tech text-neutral-400 uppercase">Guitar Overdrive FX:</span>
                 <button
                   onClick={() => {
                     audioEngine.playFootswitchClick()
@@ -188,7 +190,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
               {/* Mobile Social Links */}
               <div className="flex items-center justify-center gap-4 pt-3 text-xs text-neutral-400 font-tech">
                 <a
-                  href="https://instagram.com/paranoid.noise"
+                  href={config.contact.instagram}
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-red-400 transition-colors"
@@ -197,7 +199,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
                 </a>
                 <span>&bull;</span>
                 <a
-                  href="https://open.spotify.com/artist/paranoidnoise"
+                  href={config.contact.spotify}
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-red-400 transition-colors"
@@ -206,7 +208,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
                 </a>
                 <span>&bull;</span>
                 <a
-                  href="https://youtube.com/@paranoid.noise"
+                  href={config.contact.youtube}
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-red-400 transition-colors"
@@ -215,7 +217,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
                 </a>
                 <span>&bull;</span>
                 <a
-                  href="https://soundcloud.com/paranoidnoise"
+                  href={config.contact.soundcloud}
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-red-400 transition-colors"

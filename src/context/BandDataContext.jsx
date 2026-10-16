@@ -5,8 +5,10 @@ import {
   SINGLES_DISCOGRAPHY,
   TOUR_EVENTS,
   MERCH_ITEMS,
-  BAND_CONTACT
+  BAND_CONTACT,
+  SITE_IMAGES
 } from '../data/bandData'
+import { CONTENT_VERSION, migrateLegacyContent } from '../lib/contentMigration'
 import {
   isSupabaseConfigured,
   supabase,
@@ -104,7 +106,9 @@ const DEFAULT_CONFIG = {
   singles: SINGLES_DISCOGRAPHY,
   gigs: TOUR_EVENTS,
   merch: MERCH_ITEMS,
-  contact: BAND_CONTACT
+  contact: BAND_CONTACT,
+  images: SITE_IMAGES,
+  contentVersion: CONTENT_VERSION
 }
 
 // Where config lives in this browser. LOCAL_KEY holds admin edits while there is no shared content;
@@ -115,14 +119,18 @@ const LOCAL_KEY = 'pn_live_band_config'
 const CACHE_KEY = 'pn_site_content_cache'
 const PUBLISH_DELAY_MS = 700
 
-// Saved or published content may predate newer fields, so fill the gaps from the defaults
+// Saved or published content may predate newer fields (fill the gaps from the defaults) or the
+// current default copy (swap items that were never edited, see contentMigration.js)
 function mergeConfig(saved) {
+  const content = migrateLegacyContent(saved, DEFAULT_CONFIG)
   return {
     ...DEFAULT_CONFIG,
-    ...saved,
-    theme: { ...DEFAULT_CONFIG.theme, ...(saved.theme || {}) },
-    hero: { ...DEFAULT_CONFIG.hero, ...(saved.hero || {}) },
-    contact: { ...DEFAULT_CONFIG.contact, ...(saved.contact || {}) }
+    ...content,
+    theme: { ...DEFAULT_CONFIG.theme, ...(content.theme || {}) },
+    hero: { ...DEFAULT_CONFIG.hero, ...(content.hero || {}) },
+    contact: { ...DEFAULT_CONFIG.contact, ...(content.contact || {}) },
+    images: { ...DEFAULT_CONFIG.images, ...(content.images || {}) },
+    contentVersion: CONTENT_VERSION
   }
 }
 
@@ -161,6 +169,8 @@ export function BandDataProvider({ children }) {
   // 'off': no Supabase env | 'loading': checking site_content | 'ready': shared content is active
   // | 'unavailable': unreachable, or supabase-admin.sql not run yet (admin edits stay in this browser)
   const [remoteStatus, setRemoteStatus] = useState(isSupabaseConfigured ? 'loading' : 'off')
+  // Why the content is 'unavailable': 'missing' (SQL not run yet) or 'network' (server unreachable)
+  const [remoteReason, setRemoteReason] = useState('')
   const [adminUser, setAdminUser] = useState(null)
   const [syncState, setSyncState] = useState({ status: 'idle', error: '' })
 
@@ -177,14 +187,21 @@ export function BandDataProvider({ children }) {
     root.style.setProperty('--primary-rock-glow', preset.glowColor)
   }, [config.theme.preset])
 
+  // The browser tab icon follows the logo
+  useEffect(() => {
+    const icon = document.querySelector('link[rel="icon"]')
+    if (icon && config.images.logo) icon.href = config.images.logo
+  }, [config.images.logo])
+
   // Shared content from Supabase wins over local copies once the site_content table exists
   useEffect(() => {
     if (!isSupabaseConfigured) return
     let cancelled = false
 
-    fetchSiteContent().then(({ status, config: remote }) => {
+    fetchSiteContent().then(({ status, reason, config: remote }) => {
       if (cancelled) return
       setRemoteStatus(status)
+      setRemoteReason(reason || '')
       if (status !== 'ready') return
 
       const next = remote ? mergeConfig(remote) : DEFAULT_CONFIG
@@ -279,6 +296,14 @@ export function BandDataProvider({ children }) {
     }))
   }
 
+  // One or more of the site-wide image slots (see IMAGE_SLOTS in bandData.js)
+  const updateImages = (imageUpdates) => {
+    commit(prev => ({
+      ...prev,
+      images: { ...prev.images, ...imageUpdates }
+    }))
+  }
+
   // With shared content this deletes the published row, so the site returns to bandData.js
   const resetToDefaults = async () => {
     clearTimeout(publishTimer.current)
@@ -301,7 +326,7 @@ export function BandDataProvider({ children }) {
   const importConfig = (jsonString) => {
     try {
       const parsed = JSON.parse(jsonString)
-      if (!parsed || typeof parsed !== 'object') throw new Error('Format file tidak valid')
+      if (!parsed || typeof parsed !== 'object') throw new Error('This file is not a valid backup')
       commit(mergeConfig(parsed))
       return { success: true }
     } catch (err) {
@@ -327,9 +352,12 @@ export function BandDataProvider({ children }) {
         updateGigs,
         updateMerch,
         updateContact,
+        updateImages,
         resetToDefaults,
         importConfig,
+        getConfig: () => configRef.current,
         remoteStatus,
+        remoteReason,
         adminUser,
         syncState,
         adminLogin: adminSignIn,

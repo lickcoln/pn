@@ -14,7 +14,7 @@ export default function ContactBooking() {
     eventDate: '',
     city: '',
     venue: '',
-    eventType: 'Festival / Gig',
+    eventType: 'Music Festival',
     budgetEstimate: '',
     email: '',
     phone: '',
@@ -51,9 +51,29 @@ export default function ContactBooking() {
   }
 
   const handleSendToWhatsAppDirect = () => {
-    const text = `Halo Paranoid Noise Management! Saya ingin mengajukan booking gig:\n\n*Penyelenggara:* ${formData.organizerName}\n*Nama Acara:* ${formData.eventName}\n*Tanggal:* ${formData.eventDate}\n*Kota & Venue:* ${formData.city} / ${formData.venue}\n*Jenis Acara:* ${formData.eventType}\n*Budget/Penawaran:* ${formData.budgetEstimate || '-'}\n*Kontak:* ${formData.phone} (${formData.email})\n*Pesan:* ${formData.message || '-'}\n\nMohon info ketersediaan jadwal dan technical rider. Terima kasih!`
+    const text = `Hello Paranoid Noise Management! I would like to submit a gig booking request:\n\n*Organizer:* ${formData.organizerName}\n*Event name:* ${formData.eventName}\n*Date:* ${formData.eventDate}\n*City & venue:* ${formData.city} / ${formData.venue}\n*Event type:* ${formData.eventType}\n*Budget/offer:* ${formData.budgetEstimate || '-'}\n*Contact:* ${formData.phone} (${formData.email})\n*Message:* ${formData.message || '-'}\n\nPlease let me know your availability and the technical rider. Thank you!`
     const url = `https://wa.me/${contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
+  }
+
+  // The `download` attribute is ignored for files hosted on another domain (like the uploaded
+  // press kit), so fetch the file and save it from memory instead
+  const pressKitUrl = config.images.pressKit
+  const handleDownloadPressKit = async (e) => {
+    e.preventDefault()
+    try {
+      const response = await fetch(pressKitUrl)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const blob = await response.blob()
+      const extension = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg')
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `Paranoid_Noise_EPK_Rider.${extension}`
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch {
+      window.open(pressKitUrl, '_blank')
+    }
   }
 
   return (
@@ -70,10 +90,10 @@ export default function ContactBooking() {
             <Mail className="w-3.5 h-3.5 text-red-500" /> CONTACT &amp; BOOKING MANAGEMENT
           </div>
           <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
-            HUBUNGI <span className="text-red-600">PARANOID NOISE</span>
+            CONTACT <span className="text-red-600">PARANOID NOISE</span>
           </h2>
           <p className="font-tech text-sm text-neutral-400 mt-2">
-            Untuk keperluan booking jadwal panggung, media interview, kolaborasi, dan kurasi festival musik.
+            For stage bookings, media interviews, collaborations, and music festival curation.
           </p>
         </div>
 
@@ -96,7 +116,7 @@ export default function ContactBooking() {
 
               {/* WhatsApp Contact */}
               <a
-                href={`https://wa.me/${contact.whatsappRaw}?text=${encodeURIComponent('Halo Paranoid Noise! Saya ingin menanyakan jadwal booking band.')}`}
+                href={`https://wa.me/${contact.whatsappRaw}?text=${encodeURIComponent('Hello Paranoid Noise! I would like to ask about booking the band.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="p-4 rounded-xl bg-neutral-900/80 border border-neutral-800 hover:border-green-600/80 flex items-center gap-4 transition-all group"
@@ -106,7 +126,7 @@ export default function ContactBooking() {
                 </div>
                 <div>
                   <span className="text-[10px] font-tech font-bold uppercase tracking-widest text-neutral-400 block">
-                    WHATSAPP RESMI:
+                    OFFICIAL WHATSAPP:
                   </span>
                   <span className="font-tech text-base font-bold text-white group-hover:text-green-400 transition-colors">
                     {contact.whatsappDisplay}
@@ -124,7 +144,7 @@ export default function ContactBooking() {
                 </div>
                 <div className="min-w-0">
                   <span className="text-[10px] font-tech font-bold uppercase tracking-widest text-neutral-400 block">
-                    EMAIL RESMI BAND:
+                    OFFICIAL BAND EMAIL:
                   </span>
                   <span className="font-tech text-sm font-bold text-white group-hover:text-red-400 transition-colors truncate block">
                     {contact.email}
@@ -138,12 +158,12 @@ export default function ContactBooking() {
                   Technical Rider &amp; Press Kit:
                 </span>
                 <a
-                  href="/band/band_rock_8_1254x1254.png"
-                  download="Paranoid_Noise_EPK_Rider.png"
+                  href={pressKitUrl}
+                  onClick={handleDownloadPressKit}
                   className="w-full py-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 hover:border-red-600 text-neutral-200 hover:text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
                 >
                   <Download className="w-4 h-4 text-red-500" />
-                  <span>UNDUH TECHNICAL RIDER &amp; EPK</span>
+                  <span>DOWNLOAD TECHNICAL RIDER &amp; EPK</span>
                 </a>
               </div>
 
@@ -152,7 +172,7 @@ export default function ContactBooking() {
             {/* Official Social Media Channels Card */}
             <div className="p-6 rounded-2xl bg-neutral-950/90 border border-neutral-800/90 shadow-xl space-y-4">
               <span className="text-xs font-tech font-bold uppercase tracking-widest text-red-500 block">
-                IKUTI KANAL RESMI:
+                FOLLOW OUR OFFICIAL CHANNELS:
               </span>
 
               <div className="grid grid-cols-2 gap-3 font-tech text-xs">
@@ -229,34 +249,34 @@ export default function ContactBooking() {
             <div className="p-8 rounded-2xl bg-neutral-950/95 border-2 border-neutral-800/90 shadow-2xl relative">
               
               <h3 className="font-bebas text-3xl sm:text-4xl text-white tracking-wide mb-2">
-                FORMULIR PENGAJUAN GIGS / EVENT
+                GIG / EVENT BOOKING FORM
               </h3>
               <p className="font-tech text-xs text-neutral-400 mb-6">
-                Isi data di bawah ini untuk mengundang Paranoid Noise. Tim kami akan segera menanggapi proposal Anda.
+                Fill in the details below to invite Paranoid Noise. Our team will respond to your proposal shortly.
               </p>
 
               {isSuccess ? (
                 <div className="p-8 rounded-2xl bg-neutral-900 border border-green-700 text-center space-y-4">
                   <CheckCircle className="w-14 h-14 text-green-500 mx-auto" />
                   <h4 className="font-bebas text-3xl text-white tracking-wide">
-                    PROPOSAL BOOKING TERKIRIM!
+                    BOOKING PROPOSAL SENT!
                   </h4>
                   <p className="font-tech text-xs sm:text-sm text-neutral-300 max-w-md mx-auto">
-                    Data booking telah tersimpan. Untuk respon prioritas tercepat, kirimkan juga langsung ke WhatsApp resmi kami:
+                    Your booking details have been saved. For the fastest priority response, also send them directly to our official WhatsApp:
                   </p>
                   <button
                     onClick={handleSendToWhatsAppDirect}
                     className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-tech font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center justify-center gap-2 shadow-xl"
                   >
                     <Send className="w-4 h-4" />
-                    <span>KIRIM FORMAT KE WHATSAPP BAND</span>
+                    <span>SEND DETAILS TO BAND WHATSAPP</span>
                   </button>
                   <div>
                     <button
                       onClick={() => setIsSuccess(false)}
                       className="text-xs font-tech text-neutral-400 hover:text-white underline mt-2"
                     >
-                      Kirim Formulir Lain
+                      Send Another Form
                     </button>
                   </div>
                 </div>
@@ -266,28 +286,28 @@ export default function ContactBooking() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Nama Penyelenggara / EO *
+                        Organizer / Event Organizer Name *
                       </label>
                       <input
                         type="text"
                         required
                         value={formData.organizerName}
                         onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
-                        placeholder="Contoh: Kolektif Rock Jakarta"
+                        placeholder="e.g. Jakarta Rock Collective"
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Nama Event / Festival *
+                        Event / Festival Name *
                       </label>
                       <input
                         type="text"
                         required
                         value={formData.eventName}
                         onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
-                        placeholder="Contoh: Grunge Rebellion 2026"
+                        placeholder="e.g. Grunge Rebellion 2026"
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       />
                     </div>
@@ -296,7 +316,7 @@ export default function ContactBooking() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Tanggal Acara *
+                        Event Date *
                       </label>
                       <input
                         type="date"
@@ -309,27 +329,27 @@ export default function ContactBooking() {
 
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Kota *
+                        City *
                       </label>
                       <input
                         type="text"
                         required
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="Jakarta / Bandung / dll"
+                        placeholder="Jakarta / Bandung / etc."
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Nama Venue / Lokasi
+                        Venue Name / Location
                       </label>
                       <input
                         type="text"
                         value={formData.venue}
                         onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                        placeholder="Gedung / Club / Studio"
+                        placeholder="Hall / Club / Studio"
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       />
                     </div>
@@ -338,31 +358,31 @@ export default function ContactBooking() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Jenis Acara
+                        Event Type
                       </label>
                       <select
                         value={formData.eventType}
                         onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       >
-                        <option value="Festival Musik">Festival Musik</option>
+                        <option value="Music Festival">Music Festival</option>
                         <option value="Underground Club Gig">Underground Club Gig</option>
-                        <option value="Pensi Kampus / Sekolah">Pensi Kampus / Sekolah</option>
-                        <option value="Showcase Band">Showcase Band</option>
-                        <option value="Tour Kota / Regional">Tour Kota / Regional</option>
-                        <option value="Lainnya">Lainnya</option>
+                        <option value="Campus / School Event">Campus / School Event</option>
+                        <option value="Band Showcase">Band Showcase</option>
+                        <option value="City / Regional Tour">City / Regional Tour</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Estimasi Budget / Penawaran (IDR)
+                        Budget / Offer Estimate (IDR)
                       </label>
                       <input
                         type="text"
                         value={formData.budgetEstimate}
                         onChange={(e) => setFormData({ ...formData, budgetEstimate: e.target.value })}
-                        placeholder="Contoh: Negotiable / Rp ..."
+                        placeholder="e.g. Negotiable / IDR ..."
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       />
                     </div>
@@ -371,7 +391,7 @@ export default function ContactBooking() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        No. WhatsApp Kontak *
+                        Contact WhatsApp Number *
                       </label>
                       <input
                         type="tel"
@@ -385,7 +405,7 @@ export default function ContactBooking() {
 
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Email Resmi *
+                        Official Email *
                       </label>
                       <input
                         type="email"
@@ -400,13 +420,13 @@ export default function ContactBooking() {
 
                   <div>
                     <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                      Catatan / Kebutuhan Tambahan
+                      Notes / Additional Requirements
                     </label>
                     <textarea
                       rows={3}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Tuliskan durasi manggung yang diinginkan, lineup band lain, atau akomodasi..."
+                      placeholder="Tell us the set length you want, the other bands on the lineup, or accommodation..."
                       className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech resize-none"
                     />
                   </div>
@@ -417,7 +437,7 @@ export default function ContactBooking() {
                       disabled={isSubmitting}
                       className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-red-950/60"
                     >
-                      {isSubmitting ? 'Mengirim Proposal...' : 'KIRIM PROPOSAL BOOKING'}
+                      {isSubmitting ? 'Sending Proposal...' : 'SEND BOOKING PROPOSAL'}
                     </button>
 
                     <button
@@ -426,7 +446,7 @@ export default function ContactBooking() {
                       className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
                     >
                       <Send className="w-3.5 h-3.5 text-green-400" />
-                      <span>KIRIM VIA WHATSAPP LANGSUNG</span>
+                      <span>SEND DIRECTLY VIA WHATSAPP</span>
                     </button>
                   </div>
 

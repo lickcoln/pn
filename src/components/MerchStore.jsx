@@ -22,21 +22,21 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
 
   const handleDirectWhatsAppOrder = (item) => {
     const size = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
-    const text = `Halo Paranoid Noise! Saya mau order official merchandise:\n\n*Item:* ${item.name}\n*Ukuran/Varian:* ${size}\n*Harga:* ${item.priceFormatted}\n\nMohon info ketersediaan stok & ongkir ke alamat saya. Terima kasih!`
+    const text = `Hello Paranoid Noise! I would like to order official merchandise:\n\n*Item:* ${item.name}\n*Size/Variant:* ${size}\n*Price:* ${item.priceFormatted}\n\nPlease let me know about stock availability and shipping to my address. Thank you!`
     const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
 
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0)
-  const cartTotalFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(cartTotal)
+  const cartTotalFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(cartTotal)
 
   const handleCheckoutViaWhatsApp = () => {
     if (cart.length === 0) return
-    let text = `Halo Paranoid Noise! Saya mau order merchandise berikut:\n\n`
+    let text = `Hello Paranoid Noise! I would like to order the following merchandise:\n\n`
     cart.forEach((item, idx) => {
-      text += `${idx + 1}. ${item.name} (${item.selectedSize}) x ${item.quantity} = Rp ${(item.price * item.quantity).toLocaleString('id-ID')}\n`
+      text += `${idx + 1}. ${item.name} (${item.selectedSize}) x ${item.quantity} = IDR ${(item.price * item.quantity).toLocaleString('en-US')}\n`
     })
-    text += `\n*TOTAL:* ${cartTotalFormatted}\n\nMohon petunjuk rekening pembayaran dan formulir pengiriman. Rock on!`
+    text += `\n*TOTAL:* ${cartTotalFormatted}\n\nPlease send me the payment account details and the shipping form. Rock on!`
     const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
@@ -63,7 +63,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
             </h2>
           </div>
           <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
-            Dukung musikalitas independen Paranoid Noise. Merchandise resmi dengan kualitas premium, sablon discharge grunge, dan detail autentik.
+            Support the independent musicianship of Paranoid Noise. Official merchandise with premium quality, grunge discharge prints, and authentic details.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                   {/* Size Selector */}
                   <div className="mb-4">
                     <span className="text-[11px] font-tech font-bold text-neutral-400 uppercase block mb-1.5">
-                      PILIH UKURAN / VARIAN:
+                      SELECT SIZE / VARIANT:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {item.sizes.map((sz) => (
@@ -153,11 +153,11 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                   >
                     {isJustAdded ? (
                       <>
-                        <Check className="w-4 h-4" /> DITAMBAHKAN KE CART
+                        <Check className="w-4 h-4" /> ADDED TO CART
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="w-4 h-4 text-red-500" /> MASUKKAN KERANJANG
+                        <ShoppingBag className="w-4 h-4 text-red-500" /> ADD TO CART
                       </>
                     )}
                   </button>
@@ -166,7 +166,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                     onClick={() => handleDirectWhatsAppOrder(item)}
                     className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-md shadow-red-950/50"
                   >
-                    <Send className="w-3.5 h-3.5" /> PESAN VIA WHATSAPP LANGSUNG
+                    <Send className="w-3.5 h-3.5" /> ORDER DIRECTLY VIA WHATSAPP
                   </button>
                 </div>
 
@@ -194,7 +194,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                   <div className="flex items-center gap-2">
                     <ShoppingBag className="w-5 h-5 text-red-500" />
                     <h3 className="font-bebas text-2xl text-white tracking-wide">
-                      KERANJANG MERCHANDISE ({cart.length})
+                      MERCHANDISE CART ({cart.length})
                     </h3>
                   </div>
                   <button
@@ -209,12 +209,12 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                 {cart.length === 0 ? (
                   <div className="text-center py-16 text-neutral-500 font-tech">
                     <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Keranjang Anda masih kosong.</p>
+                    <p className="text-sm">Your cart is empty.</p>
                     <button
                       onClick={onCloseCart}
                       className="mt-4 px-4 py-2 rounded-lg bg-neutral-900 text-red-400 text-xs font-bold uppercase"
                     >
-                      Lihat Koleksi Merch
+                      Browse the Merch Collection
                     </button>
                   </div>
                 ) : (
@@ -233,7 +233,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                             {item.name}
                           </h4>
                           <span className="text-[11px] font-tech text-neutral-400">
-                            Size: <strong className="text-neutral-200">{item.selectedSize}</strong> &bull; Rp {item.price.toLocaleString('id-ID')}
+                            Size: <strong className="text-neutral-200">{item.selectedSize}</strong> &bull; IDR {item.price.toLocaleString('en-US')}
                           </span>
                         </div>
 
@@ -257,7 +257,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                           <button
                             onClick={() => onRemoveFromCart(item.id, item.selectedSize)}
                             className="p-1 rounded bg-red-950/80 text-red-400 hover:text-red-300 ml-1"
-                            title="Hapus"
+                            title="Remove"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -280,7 +280,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                     onClick={handleCheckoutViaWhatsApp}
                     className="w-full py-3.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl"
                   >
-                    <Send className="w-4 h-4" /> CHECKOUT KE WHATSAPP BAND
+                    <Send className="w-4 h-4" /> CHECKOUT VIA BAND WHATSAPP
                   </button>
                 </div>
               )}

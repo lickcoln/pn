@@ -20,7 +20,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
       {/* Background Live Concert Photo with Vignette and Gradient */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/band/band_rock_9_1264x840.png"
+          src={config.images.heroBackground}
           alt="Paranoid Noise Live Concert"
           className="w-full h-full object-cover object-center filter grayscale contrast-125 brightness-40 scale-105"
         />
@@ -68,7 +68,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
             audioEngine.playFootswitchClick()
             audioEngine.playTrackRiff('featured', 'grunge_intro')
           }}
-          title="Klik Stompbox untuk Play Riff Gitar!"
+          title="Click the stompbox to play a guitar riff!"
         >
           {/* Backlight glow */}
           <div
@@ -81,7 +81,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
             style={{ borderColor: `${currentTheme.primaryColor}99` }}
           >
             <img
-              src="/logo.png"
+              src={config.images.logo}
               alt="Paranoid Noise Stompbox"
               className="w-full h-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.9)]"
             />
@@ -161,7 +161,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
             <div className="w-7 h-7 rounded-full bg-black/40 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
             </div>
-            <span>DENGARKAN MUSIK &amp; DISCOGRAPHY</span>
+            <span>LISTEN TO THE MUSIC &amp; DISCOGRAPHY</span>
           </button>
 
           {/* Tour Gigs Button */}
@@ -170,7 +170,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
             className="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-4 bg-neutral-900/90 hover:bg-neutral-800 text-neutral-200 hover:text-white font-tech font-bold uppercase tracking-wider text-sm rounded-lg border border-neutral-700 hover:border-white/50 transition-all"
           >
             <Calendar className="w-4 h-4" style={{ color: currentTheme.primaryColor }} />
-            <span>JADWAL GIGS &amp; TIKET</span>
+            <span>GIGS &amp; TICKETS</span>
           </a>
 
           {/* Booking Contact Button */}
@@ -194,7 +194,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
             <div className="font-bebas text-3xl tracking-wider" style={{ color: currentTheme.primaryColor }}>
               {config.singles.length} SINGLES
             </div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">Resmi Dirilis</div>
+            <div className="text-xs font-tech text-neutral-400 uppercase">Officially Released</div>
           </div>
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
             <div className="font-bebas text-3xl text-white tracking-wider">

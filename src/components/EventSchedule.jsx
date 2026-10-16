@@ -54,7 +54,7 @@ export default function EventSchedule() {
   }
 
   const handleSendToWhatsApp = () => {
-    const text = `Halo Paranoid Noise! Saya mau konfirmasi tiket untuk:\n\n*Event:* ${selectedGig.title}\n*Tanggal:* ${selectedGig.date}\n*Lokasi:* ${selectedGig.venue}, ${selectedGig.city}\n*Nama:* ${rsvpForm.name}\n*Jumlah Tiket:* ${rsvpForm.ticketCount}\n*No. HP/WA:* ${rsvpForm.phone}\n*Email:* ${rsvpForm.email}\n\nMohon info pembayaran/e-ticketnya. Terima kasih!`
+    const text = `Hello Paranoid Noise! I would like to confirm my tickets for:\n\n*Event:* ${selectedGig.title}\n*Date:* ${selectedGig.date}\n*Location:* ${selectedGig.venue}, ${selectedGig.city}\n*Name:* ${rsvpForm.name}\n*Number of tickets:* ${rsvpForm.ticketCount}\n*Phone/WhatsApp:* ${rsvpForm.phone}\n*Email:* ${rsvpForm.email}\n\nPlease send me the payment details / e-ticket. Thank you!`
     const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
@@ -78,14 +78,14 @@ export default function EventSchedule() {
                 className="w-2 h-2 rounded-full animate-ping"
                 style={{ backgroundColor: currentTheme.primaryColor }}
               />{' '}
-              JADWAL EVENT &amp; TOUR
+              EVENT &amp; TOUR SCHEDULE
             </div>
             <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
               TOUR &amp; <span style={{ color: currentTheme.primaryColor }}>LIVE DATES</span>
             </h2>
           </div>
           <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
-            Saksikan energi panggung eksplosif Paranoid Noise langsung dari barisan depan moshpit. Dapatkan tiket atau reservasi sekarang!
+            Witness the explosive stage energy of Paranoid Noise live from the front row of the moshpit. Get your tickets or reserve now!
           </p>
         </div>
 
@@ -159,7 +159,7 @@ export default function EventSchedule() {
                       target="_blank"
                       rel="noreferrer"
                       className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-400 hover:text-white transition-colors"
-                      title="Lihat Peta Lokasi"
+                      title="View location on map"
                     >
                       <MapPin className="w-4 h-4" />
                     </a>
@@ -171,11 +171,11 @@ export default function EventSchedule() {
                       className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg shadow-red-950/50 hover:scale-105"
                     >
                       <Ticket className="w-4 h-4" />
-                      <span>PESAN TIKET / RSVP</span>
+                      <span>GET TICKETS / RSVP</span>
                     </button>
                   ) : (
                     <span className="px-4 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-tech text-xs uppercase font-bold">
-                      SHOW SELESAI
+                      SHOW FINISHED
                     </span>
                   )}
                 </div>
@@ -189,17 +189,17 @@ export default function EventSchedule() {
         <div className="mt-16 max-w-5xl mx-auto p-8 rounded-2xl bg-gradient-to-r from-red-950/40 via-neutral-950 to-neutral-950 border border-red-900/50 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h3 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider">
-              INGIN PARANOID NOISE MANGGUNG DI KOTAMU?
+              WANT PARANOID NOISE IN YOUR CITY?
             </h3>
             <p className="font-tech text-xs sm:text-sm text-neutral-300 mt-1 max-w-xl">
-              Kami siap mengguncang panggung festival kampus, gig underground, showcase klub, maupun tour regional.
+              We are ready to rock campus festivals, underground gigs, club showcases, and regional tours.
             </p>
           </div>
           <a
             href="#booking"
             className="px-8 py-3.5 rounded-xl bg-white text-black hover:bg-neutral-200 font-tech font-bold text-xs uppercase tracking-wider transition-colors shrink-0"
           >
-            HUBUNGI BOOKING AGENT
+            CONTACT BOOKING AGENT
           </a>
         </div>
 
@@ -225,7 +225,7 @@ export default function EventSchedule() {
 
               <div className="mb-6">
                 <span className="text-[10px] font-tech font-bold text-red-500 uppercase tracking-widest">
-                  RESERVASI TIKET GIGS
+                  GIG TICKET RESERVATION
                 </span>
                 <h3 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider leading-none mt-1">
                   {selectedGig.title}
@@ -239,37 +239,37 @@ export default function EventSchedule() {
                 <div className="p-6 rounded-2xl bg-neutral-900 border border-green-700/60 text-center space-y-4">
                   <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
                   <h4 className="font-bebas text-2xl text-white tracking-wide">
-                    RESERVASI BERHASIL TERSIMPAN!
+                    RESERVATION SAVED!
                   </h4>
                   <p className="font-tech text-xs text-neutral-300">
-                    Data Anda telah kami catat. Klik tombol di bawah untuk konfirmasi instan via WhatsApp resmi band Paranoid Noise:
+                    We have recorded your details. Tap the button below to confirm instantly via the official Paranoid Noise WhatsApp:
                   </p>
                   <button
                     onClick={handleSendToWhatsApp}
                     className="w-full py-3.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-tech font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    <span>KONFIRMASI KE WHATSAPP BAND</span>
+                    <span>CONFIRM VIA BAND WHATSAPP</span>
                   </button>
                   <button
                     onClick={handleCloseModal}
                     className="text-xs font-tech text-neutral-400 hover:text-white underline"
                   >
-                    Tutup
+                    Close
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmitRsvp} className="space-y-4">
                   <div>
                     <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                      Nama Lengkap *
+                      Full Name *
                     </label>
                     <input
                       type="text"
                       required
                       value={rsvpForm.name}
                       onChange={(e) => setRsvpForm({ ...rsvpForm, name: e.target.value })}
-                      placeholder="Masukkan nama Anda"
+                      placeholder="Enter your name"
                       className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                     />
                   </div>
@@ -277,20 +277,20 @@ export default function EventSchedule() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        No. WhatsApp *
+                        WhatsApp Number *
                       </label>
                       <input
                         type="tel"
                         required
                         value={rsvpForm.phone}
                         onChange={(e) => setRsvpForm({ ...rsvpForm, phone: e.target.value })}
-                        placeholder="Contoh: 08123456789"
+                        placeholder="e.g. 08123456789"
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                        Jumlah Tiket
+                        Number of Tickets
                       </label>
                       <select
                         value={rsvpForm.ticketCount}
@@ -298,7 +298,7 @@ export default function EventSchedule() {
                         className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech"
                       >
                         {[1, 2, 3, 4, 5].map((num) => (
-                          <option key={num} value={num}>{num} Tiket</option>
+                          <option key={num} value={num}>{num} {num === 1 ? 'Ticket' : 'Tickets'}</option>
                         ))}
                       </select>
                     </div>
@@ -319,13 +319,13 @@ export default function EventSchedule() {
 
                   <div>
                     <label className="block text-xs font-tech font-semibold text-neutral-300 mb-1">
-                      Catatan Tambahan (Opsional)
+                      Additional Notes (Optional)
                     </label>
                     <textarea
                       rows={2}
                       value={rsvpForm.notes}
                       onChange={(e) => setRsvpForm({ ...rsvpForm, notes: e.target.value })}
-                      placeholder="Pesan untuk personil Paranoid Noise..."
+                      placeholder="A message for the Paranoid Noise members..."
                       className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-red-600 focus:outline-none text-white text-xs font-tech resize-none"
                     />
                   </div>
@@ -336,14 +336,14 @@ export default function EventSchedule() {
                       onClick={handleCloseModal}
                       className="px-4 py-2.5 rounded-xl bg-neutral-900 text-neutral-400 hover:text-white text-xs font-tech font-bold"
                     >
-                      Batal
+                      Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
                       className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center gap-2"
                     >
-                      {isSubmitting ? 'Menyimpan...' : 'Kirim Reservasi Tiket'}
+                      {isSubmitting ? 'Saving...' : 'Submit Ticket Reservation'}
                     </button>
                   </div>
                 </form>

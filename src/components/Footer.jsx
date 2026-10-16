@@ -28,7 +28,7 @@ export default function Footer() {
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 p-1 flex items-center justify-center">
-                <img src="/logo.png" alt="Paranoid Noise" className="w-full h-full object-contain" />
+                <img src={config.images.logo} alt="Paranoid Noise" className="w-full h-full object-contain" />
               </div>
               <div>
                 <span className="font-bebas text-3xl tracking-wider text-white block leading-none">
@@ -53,15 +53,15 @@ export default function Footer() {
           {/* Quick Nav Links */}
           <div className="md:col-span-3 space-y-3 font-tech text-xs">
             <span className="text-white font-bold uppercase tracking-wider block text-sm font-bebas">
-              NAVIGASI MENU
+              SITE MENU
             </span>
             <ul className="space-y-2 text-neutral-400">
-              <li><a href="#profile" className="hover:text-red-400 transition-colors">Profil &amp; Sejarah Band</a></li>
-              <li><a href="#personnel" className="hover:text-red-400 transition-colors">Lineup Personil</a></li>
-              <li><a href="#discography" className="hover:text-red-400 transition-colors">7 Singles &amp; Stompbox Player</a></li>
-              <li><a href="#gigs" className="hover:text-red-400 transition-colors">Jadwal Gigs &amp; Tiket</a></li>
+              <li><a href="#profile" className="hover:text-red-400 transition-colors">Band Profile &amp; History</a></li>
+              <li><a href="#personnel" className="hover:text-red-400 transition-colors">Band Lineup</a></li>
+              <li><a href="#discography" className="hover:text-red-400 transition-colors">Singles &amp; Stompbox Player</a></li>
+              <li><a href="#gigs" className="hover:text-red-400 transition-colors">Gigs &amp; Tickets</a></li>
               <li><a href="#merch" className="hover:text-red-400 transition-colors">Official Merchandise</a></li>
-              <li><a href="#booking" className="hover:text-red-400 transition-colors">Booking &amp; Kontak Manajemen</a></li>
+              <li><a href="#booking" className="hover:text-red-400 transition-colors">Booking &amp; Management Contact</a></li>
             </ul>
           </div>
 
@@ -150,7 +150,7 @@ export default function Footer() {
             onClick={scrollToTop}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-red-600 text-neutral-300 hover:text-white transition-colors"
           >
-            <span>KEMBALI KE ATAS</span>
+            <span>BACK TO TOP</span>
             <ArrowUp className="w-3.5 h-3.5 text-red-500" />
           </button>
         </div>
