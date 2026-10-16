@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Mail, Phone, MessageSquare, Send, CheckCircle, Download, Radio, ShieldCheck } from 'lucide-react'
 import { InstagramIcon, YoutubeIcon, SpotifyIcon, SoundCloudIcon } from './SocialIcons'
-import { BAND_CONTACT } from '../data/bandData'
 import { submitBookingInquiry } from '../lib/supabase'
+import { useBandData } from '../context/BandDataContext'
 
 export default function ContactBooking() {
+  const { config, currentTheme } = useBandData()
+  const contact = config.contact
   const [formData, setFormData] = useState({
     organizerName: '',
     eventName: '',
@@ -50,7 +52,7 @@ export default function ContactBooking() {
 
   const handleSendToWhatsAppDirect = () => {
     const text = `Halo Paranoid Noise Management! Saya ingin mengajukan booking gig:\n\n*Penyelenggara:* ${formData.organizerName}\n*Nama Acara:* ${formData.eventName}\n*Tanggal:* ${formData.eventDate}\n*Kota & Venue:* ${formData.city} / ${formData.venue}\n*Jenis Acara:* ${formData.eventType}\n*Budget/Penawaran:* ${formData.budgetEstimate || '-'}\n*Kontak:* ${formData.phone} (${formData.email})\n*Pesan:* ${formData.message || '-'}\n\nMohon info ketersediaan jadwal dan technical rider. Terima kasih!`
-    const url = `https://wa.me/${BAND_CONTACT.whatsappRaw}?text=${encodeURIComponent(text)}`
+    const url = `https://wa.me/${contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
 
@@ -94,7 +96,7 @@ export default function ContactBooking() {
 
               {/* WhatsApp Contact */}
               <a
-                href={`https://wa.me/${BAND_CONTACT.whatsappRaw}?text=${encodeURIComponent('Halo Paranoid Noise! Saya ingin menanyakan jadwal booking band.')}`}
+                href={`https://wa.me/${contact.whatsappRaw}?text=${encodeURIComponent('Halo Paranoid Noise! Saya ingin menanyakan jadwal booking band.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="p-4 rounded-xl bg-neutral-900/80 border border-neutral-800 hover:border-green-600/80 flex items-center gap-4 transition-all group"
@@ -107,14 +109,14 @@ export default function ContactBooking() {
                     WHATSAPP RESMI:
                   </span>
                   <span className="font-tech text-base font-bold text-white group-hover:text-green-400 transition-colors">
-                    {BAND_CONTACT.whatsappDisplay}
+                    {contact.whatsappDisplay}
                   </span>
                 </div>
               </a>
 
               {/* Email Contact */}
               <a
-                href={`mailto:${BAND_CONTACT.email}?subject=Booking Inquiry Paranoid Noise`}
+                href={`mailto:${contact.email}?subject=Booking Inquiry Paranoid Noise`}
                 className="p-4 rounded-xl bg-neutral-900/80 border border-neutral-800 hover:border-red-600/80 flex items-center gap-4 transition-all group"
               >
                 <div className="w-12 h-12 rounded-lg bg-red-950/60 border border-red-800 flex items-center justify-center text-red-400 group-hover:scale-105 transition-transform">
@@ -125,7 +127,7 @@ export default function ContactBooking() {
                     EMAIL RESMI BAND:
                   </span>
                   <span className="font-tech text-sm font-bold text-white group-hover:text-red-400 transition-colors truncate block">
-                    {BAND_CONTACT.email}
+                    {contact.email}
                   </span>
                 </div>
               </a>
@@ -157,7 +159,7 @@ export default function ContactBooking() {
                 
                 {/* Instagram */}
                 <a
-                  href={BAND_CONTACT.instagram}
+                  href={contact.instagram}
                   target="_blank"
                   rel="noreferrer"
                   className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-pink-600/70 text-neutral-300 hover:text-pink-400 flex items-center gap-2.5 transition-colors"
@@ -171,7 +173,7 @@ export default function ContactBooking() {
 
                 {/* Spotify */}
                 <a
-                  href={BAND_CONTACT.spotify}
+                  href={contact.spotify}
                   target="_blank"
                   rel="noreferrer"
                   className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-green-600/70 text-neutral-300 hover:text-green-400 flex items-center gap-2.5 transition-colors"
@@ -185,7 +187,7 @@ export default function ContactBooking() {
 
                 {/* YouTube */}
                 <a
-                  href={BAND_CONTACT.youtube}
+                  href={contact.youtube}
                   target="_blank"
                   rel="noreferrer"
                   className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-red-600/70 text-neutral-300 hover:text-red-400 flex items-center gap-2.5 transition-colors"
@@ -199,7 +201,7 @@ export default function ContactBooking() {
 
                 {/* SoundCloud */}
                 <a
-                  href={BAND_CONTACT.soundcloud}
+                  href={contact.soundcloud}
                   target="_blank"
                   rel="noreferrer"
                   className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-orange-600/70 text-neutral-300 hover:text-orange-400 flex items-center gap-2.5 transition-colors"

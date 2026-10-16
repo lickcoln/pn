@@ -1,27 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, Disc, ExternalLink, Radio, Volume2, Sparkles, Sliders, Music, Zap, Flame } from 'lucide-react'
-import { SINGLES_DISCOGRAPHY, BAND_CONTACT } from '../data/bandData'
+import { Play, Pause, Disc, ExternalLink, Volume2, Sparkles, Sliders, Music, Zap, Flame } from 'lucide-react'
 import { audioEngine } from '../utils/audioSynth'
+import { useBandData } from '../context/BandDataContext'
 
 export default function DiscographyPlayer({ activeTrackId, onTrackSelect, distortionActive, onToggleDistortion }) {
+  const { config, currentTheme } = useBandData()
+  const singles = config.singles
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTrack, setCurrentTrack] = useState(SINGLES_DISCOGRAPHY[0])
+  const [currentTrack, setCurrentTrack] = useState(singles[0] || {})
   const [driveLevel, setDriveLevel] = useState(75)
   const [toneLevel, setToneLevel] = useState(60)
   const [volumeLevel, setVolumeLevel] = useState(80)
   const canvasRef = useRef(null)
   const animationRef = useRef(null)
 
+  // Keep currentTrack synchronized if singles list changes
+  useEffect(() => {
+    if (singles.length > 0 && (!currentTrack || !singles.some(s => s.id === currentTrack.id))) {
+      setCurrentTrack(singles[0])
+    }
+  }, [singles])
+
   // Sync with prop when selected from elsewhere
   useEffect(() => {
     if (activeTrackId) {
-      const found = SINGLES_DISCOGRAPHY.find(t => t.id === activeTrackId)
+      const found = singles.find(t => t.id === activeTrackId)
       if (found) {
         handlePlayTrack(found)
       }
     }
-  }, [activeTrackId])
+  }, [activeTrackId, singles])
 
   // Canvas Audio Visualizer
   useEffect(() => {
@@ -312,7 +321,7 @@ export default function DiscographyPlayer({ activeTrackId, onTrackSelect, distor
 
         {/* 7 Singles Discography Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {SINGLES_DISCOGRAPHY.map((track, idx) => {
+          {singles.map((track, idx) => {
             const isThisTrackPlaying = isPlaying && currentTrack.id === track.id
 
             return (

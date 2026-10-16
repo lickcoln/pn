@@ -1,9 +1,12 @@
 import React from 'react'
 import { ArrowUp, Phone, Mail, Heart, Flame } from 'lucide-react'
 import { InstagramIcon, YoutubeIcon, SpotifyIcon, SoundCloudIcon } from './SocialIcons'
-import { BAND_CONTACT } from '../data/bandData'
+import { useBandData } from '../context/BandDataContext'
 
 export default function Footer() {
+  const { config, currentTheme } = useBandData()
+  const { contact, members, hero } = config
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -12,7 +15,10 @@ export default function Footer() {
     <footer className="bg-black border-t border-neutral-900 py-16 relative overflow-hidden">
       
       {/* Background Accent */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-red-950/20 blur-3xl pointer-events-none" />
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-24 blur-3xl pointer-events-none opacity-20"
+        style={{ backgroundColor: currentTheme.primaryColor }}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
@@ -26,7 +32,7 @@ export default function Footer() {
               </div>
               <div>
                 <span className="font-bebas text-3xl tracking-wider text-white block leading-none">
-                  PARANOID NOISE
+                  {hero.title}
                 </span>
                 <span className="text-[10px] font-tech text-neutral-400 tracking-widest uppercase">
                   PUNK ROCK &bull; SEATTLE SOUND GRUNGE TRIO
@@ -39,7 +45,8 @@ export default function Footer() {
             </p>
 
             <div className="text-xs font-tech text-neutral-500">
-              <span className="text-neutral-300 font-bold">Lineup:</span> Arief (Guitar, Vocals) &bull; Ganjar (Bass) &bull; Kimao (Drum)
+              <span className="text-neutral-300 font-bold">Lineup:</span>{' '}
+              {members.map(m => `${m.name} (${m.role})`).join(' • ')}
             </div>
           </div>
 
@@ -66,7 +73,7 @@ export default function Footer() {
 
             <div className="flex flex-wrap gap-2.5">
               <a
-                href={BAND_CONTACT.instagram}
+                href={contact.instagram}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-pink-400 hover:border-pink-600/70 transition-colors"
@@ -76,7 +83,7 @@ export default function Footer() {
               </a>
 
               <a
-                href={BAND_CONTACT.spotify}
+                href={contact.spotify}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-green-400 hover:border-green-600/70 transition-colors"
@@ -86,7 +93,7 @@ export default function Footer() {
               </a>
 
               <a
-                href={BAND_CONTACT.youtube}
+                href={contact.youtube}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-red-500 hover:border-red-600/70 transition-colors"
@@ -96,7 +103,7 @@ export default function Footer() {
               </a>
 
               <a
-                href={BAND_CONTACT.soundcloud}
+                href={contact.soundcloud}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-orange-400 hover:border-orange-600/70 transition-colors"
@@ -106,7 +113,7 @@ export default function Footer() {
               </a>
 
               <a
-                href={`https://wa.me/${BAND_CONTACT.whatsappRaw}`}
+                href={`https://wa.me/${contact.whatsappRaw}`}
                 target="_blank"
                 rel="noreferrer"
                 className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-green-400 hover:border-green-600/70 transition-colors"
@@ -116,7 +123,7 @@ export default function Footer() {
               </a>
 
               <a
-                href={`mailto:${BAND_CONTACT.email}`}
+                href={`mailto:${contact.email}`}
                 className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-red-400 hover:border-red-600/70 transition-colors"
                 title="Email Band"
               >
@@ -125,8 +132,8 @@ export default function Footer() {
             </div>
 
             <div className="pt-2 text-xs font-tech text-neutral-400 space-y-1">
-              <div><strong className="text-neutral-200">Email:</strong> {BAND_CONTACT.email}</div>
-              <div><strong className="text-neutral-200">WhatsApp:</strong> {BAND_CONTACT.whatsappDisplay}</div>
+              <div><strong className="text-neutral-200">Email:</strong> {contact.email}</div>
+              <div><strong className="text-neutral-200">WhatsApp:</strong> {contact.whatsappDisplay}</div>
             </div>
           </div>
 

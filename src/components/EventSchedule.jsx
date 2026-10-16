@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, MapPin, Clock, Ticket, ExternalLink, CheckCircle, AlertCircle, X, Send } from 'lucide-react'
-import { TOUR_EVENTS, BAND_CONTACT } from '../data/bandData'
 import { submitTicketRsvp } from '../lib/supabase'
+import { useBandData } from '../context/BandDataContext'
 
 export default function EventSchedule() {
+  const { config, currentTheme } = useBandData()
+  const gigs = config.gigs
   const [selectedGig, setSelectedGig] = useState(null)
   const [rsvpForm, setRsvpForm] = useState({
     name: '',
@@ -53,7 +55,7 @@ export default function EventSchedule() {
 
   const handleSendToWhatsApp = () => {
     const text = `Halo Paranoid Noise! Saya mau konfirmasi tiket untuk:\n\n*Event:* ${selectedGig.title}\n*Tanggal:* ${selectedGig.date}\n*Lokasi:* ${selectedGig.venue}, ${selectedGig.city}\n*Nama:* ${rsvpForm.name}\n*Jumlah Tiket:* ${rsvpForm.ticketCount}\n*No. HP/WA:* ${rsvpForm.phone}\n*Email:* ${rsvpForm.email}\n\nMohon info pembayaran/e-ticketnya. Terima kasih!`
-    const url = `https://wa.me/${BAND_CONTACT.whatsappRaw}?text=${encodeURIComponent(text)}`
+    const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
 
@@ -68,11 +70,18 @@ export default function EventSchedule() {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-neutral-800">
           <div>
-            <div className="flex items-center gap-2 text-red-500 font-tech font-bold text-xs uppercase tracking-widest mb-2">
-              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" /> JADWAL EVENT &amp; TOUR
+            <div
+              className="flex items-center gap-2 font-tech font-bold text-xs uppercase tracking-widest mb-2"
+              style={{ color: currentTheme.primaryColor }}
+            >
+              <span
+                className="w-2 h-2 rounded-full animate-ping"
+                style={{ backgroundColor: currentTheme.primaryColor }}
+              />{' '}
+              JADWAL EVENT &amp; TOUR
             </div>
             <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
-              TOUR &amp; <span className="text-red-600">LIVE DATES</span>
+              TOUR &amp; <span style={{ color: currentTheme.primaryColor }}>LIVE DATES</span>
             </h2>
           </div>
           <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
@@ -82,7 +91,7 @@ export default function EventSchedule() {
 
         {/* Tour Dates List */}
         <div className="space-y-4 max-w-5xl mx-auto">
-          {TOUR_EVENTS.map((gig, idx) => {
+          {gigs.map((gig, idx) => {
             const isPast = gig.category === 'Past Gig'
 
             return (

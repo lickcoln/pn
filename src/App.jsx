@@ -8,9 +8,12 @@ import EventSchedule from './components/EventSchedule'
 import MerchStore from './components/MerchStore'
 import ContactBooking from './components/ContactBooking'
 import Footer from './components/Footer'
+import AdminPortal from './components/AdminPortal'
 import { audioEngine } from './utils/audioSynth'
+import { useBandData } from './context/BandDataContext'
 
 export default function App() {
+  const { currentTheme, config } = useBandData()
   const [cart, setCart] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('pn_cart') || '[]')
@@ -126,6 +129,9 @@ export default function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Hidden Admin Portal at bottom-right corner */}
+      <AdminPortal />
 
     </div>
   )

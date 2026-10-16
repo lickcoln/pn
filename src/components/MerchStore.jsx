@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Check, Plus, Minus, Trash2, Send, X, Flame, Sparkles } from 'lucide-react'
-import { MERCH_ITEMS, BAND_CONTACT } from '../data/bandData'
+import { useBandData } from '../context/BandDataContext'
 
 export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, onRemoveFromCart, isCartOpen, onCloseCart }) {
+  const { config, currentTheme } = useBandData()
+  const merchItems = config.merch
   const [selectedSizes, setSelectedSizes] = useState({})
   const [addedItemNotice, setAddedItemNotice] = useState(null)
 
@@ -12,16 +14,16 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
   }
 
   const handleAddToCartClick = (item) => {
-    const size = selectedSizes[item.id] || item.sizes[0]
+    const size = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
     onAddToCart({ ...item, selectedSize: size })
     setAddedItemNotice(item.id)
     setTimeout(() => setAddedItemNotice(null), 2000)
   }
 
   const handleDirectWhatsAppOrder = (item) => {
-    const size = selectedSizes[item.id] || item.sizes[0]
+    const size = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
     const text = `Halo Paranoid Noise! Saya mau order official merchandise:\n\n*Item:* ${item.name}\n*Ukuran/Varian:* ${size}\n*Harga:* ${item.priceFormatted}\n\nMohon info ketersediaan stok & ongkir ke alamat saya. Terima kasih!`
-    const url = `https://wa.me/${BAND_CONTACT.whatsappRaw}?text=${encodeURIComponent(text)}`
+    const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
 
@@ -35,7 +37,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
       text += `${idx + 1}. ${item.name} (${item.selectedSize}) x ${item.quantity} = Rp ${(item.price * item.quantity).toLocaleString('id-ID')}\n`
     })
     text += `\n*TOTAL:* ${cartTotalFormatted}\n\nMohon petunjuk rekening pembayaran dan formulir pengiriman. Rock on!`
-    const url = `https://wa.me/${BAND_CONTACT.whatsappRaw}?text=${encodeURIComponent(text)}`
+    const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
 
@@ -50,11 +52,14 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-neutral-800">
           <div>
-            <div className="flex items-center gap-2 text-red-500 font-tech font-bold text-xs uppercase tracking-widest mb-2">
+            <div
+              className="flex items-center gap-2 font-tech font-bold text-xs uppercase tracking-widest mb-2"
+              style={{ color: currentTheme.primaryColor }}
+            >
               <ShoppingBag className="w-3.5 h-3.5" /> OFFICIAL BAND MERCHANDISE
             </div>
             <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
-              PARANOID <span className="text-red-600">NOISE GEAR</span>
+              PARANOID <span style={{ color: currentTheme.primaryColor }}>NOISE GEAR</span>
             </h2>
           </div>
           <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
@@ -64,8 +69,8 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
 
         {/* Merch Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {MERCH_ITEMS.map((item, idx) => {
-            const currentSize = selectedSizes[item.id] || item.sizes[0]
+          {merchItems.map((item, idx) => {
+            const currentSize = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
             const isJustAdded = addedItemNotice === item.id
 
             return (

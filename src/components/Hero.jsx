@@ -1,23 +1,41 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Play, Calendar, Zap, MessageSquare, Volume2, ShieldAlert } from 'lucide-react'
+import { Play, Calendar, Zap, MessageSquare, Volume2 } from 'lucide-react'
 import { audioEngine } from '../utils/audioSynth'
+import { useBandData } from '../context/BandDataContext'
 
 export default function Hero({ onPlayFeaturedTrack }) {
+  const { config, currentTheme } = useBandData()
+  const { hero, members } = config
+
+  const glitchClass = config.theme.glitchIntensity === 'extreme'
+    ? 'animate-pulse scale-102'
+    : config.theme.glitchIntensity === 'off'
+    ? ''
+    : 'animate-glitch'
+
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
       
-      {/* Background Live Concert Photo with Vignette and Dark Red Gradient */}
+      {/* Background Live Concert Photo with Vignette and Gradient */}
       <div className="absolute inset-0 z-0">
         <img
           src="/band/band_rock_9_1264x840.png"
           alt="Paranoid Noise Live Concert"
           className="w-full h-full object-cover object-center filter grayscale contrast-125 brightness-40 scale-105"
         />
-        {/* Dark Grunge Gradient & Red Accent Overlays */}
+        {/* Dark Grunge Gradient & Accent Overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-black/60" />
-        <div className="absolute inset-0 bg-gradient-to-r from-red-950/40 via-transparent to-red-950/40 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-noise opacity-40 pointer-events-none" />
+        <div
+          className="absolute inset-0 mix-blend-multiply opacity-60"
+          style={{
+            background: `radial-gradient(circle at center, transparent 30%, ${currentTheme.primaryColor}22 70%, #000 100%)`
+          }}
+        />
+        <div
+          className="absolute inset-0 bg-noise pointer-events-none"
+          style={{ opacity: config.theme.noiseOpacity }}
+        />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
@@ -27,12 +45,16 @@ export default function Hero({ onPlayFeaturedTrack }) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-950/60 border border-red-700/50 backdrop-blur-md mb-6 shadow-lg shadow-red-950/40"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-950/80 border backdrop-blur-md mb-6 shadow-lg"
+          style={{ borderColor: `${currentTheme.primaryColor}80` }}
         >
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-          <Zap className="w-3.5 h-3.5 text-red-400" />
-          <span className="text-xs font-tech font-bold uppercase tracking-widest text-red-200">
-            JAKARTA UNDERGROUND &bull; EST. 2021
+          <span
+            className="w-2 h-2 rounded-full animate-ping"
+            style={{ backgroundColor: currentTheme.primaryColor }}
+          />
+          <Zap className="w-3.5 h-3.5" style={{ color: currentTheme.primaryColor }} />
+          <span className="text-xs font-tech font-bold uppercase tracking-widest text-neutral-200">
+            {hero.sceneBadge}
           </span>
         </motion.div>
 
@@ -48,18 +70,27 @@ export default function Hero({ onPlayFeaturedTrack }) {
           }}
           title="Klik Stompbox untuk Play Riff Gitar!"
         >
-          {/* Neon backlight glow */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-red-700/30 via-red-600/20 to-red-900/30 rounded-3xl blur-2xl opacity-75 group-hover:opacity-100 transition-opacity" />
+          {/* Backlight glow */}
+          <div
+            className="absolute -inset-4 rounded-3xl blur-2xl opacity-60 group-hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: `${currentTheme.primaryColor}40` }}
+          />
           
-          <div className="relative w-44 sm:w-56 md:w-64 mx-auto p-2 bg-neutral-950/90 rounded-2xl border-2 border-neutral-700 group-hover:border-red-600 transition-all duration-300 shadow-2xl hover:scale-105">
+          <div
+            className={`relative w-44 sm:w-56 md:w-64 mx-auto p-2 bg-neutral-950/90 rounded-2xl border-2 transition-all duration-300 shadow-2xl hover:scale-105 ${glitchClass}`}
+            style={{ borderColor: `${currentTheme.primaryColor}99` }}
+          >
             <img
               src="/logo.png"
               alt="Paranoid Noise Stompbox"
-              className="w-full h-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.9)] animate-glitch"
+              className="w-full h-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.9)]"
             />
             {/* Quick interactive hint */}
-            <div className="absolute bottom-1 right-2 bg-red-950/90 border border-red-800 text-[10px] font-tech font-bold text-red-300 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-              <Volume2 className="w-3 h-3 text-red-400" /> TEST STOMP FX
+            <div
+              className="absolute bottom-1 right-2 bg-neutral-950/95 border text-[10px] font-tech font-bold px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-white"
+              style={{ borderColor: currentTheme.primaryColor }}
+            >
+              <Volume2 className="w-3 h-3" style={{ color: currentTheme.primaryColor }} /> TEST STOMP FX
             </div>
           </div>
         </motion.div>
@@ -71,7 +102,14 @@ export default function Hero({ onPlayFeaturedTrack }) {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="font-bebas text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider text-white mb-2 leading-none"
         >
-          PARANOID <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-red-600 to-red-400">NOISE</span>
+          {hero.title.includes('NOISE') ? (
+            <>
+              {hero.title.replace('NOISE', '').trim()}{' '}
+              <span style={{ color: currentTheme.primaryColor }}>NOISE</span>
+            </>
+          ) : (
+            hero.title
+          )}
         </motion.h1>
 
         {/* Tagline */}
@@ -81,7 +119,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
           transition={{ duration: 0.7, delay: 0.3 }}
           className="font-grunge text-lg sm:text-2xl md:text-3xl text-neutral-300 max-w-3xl mb-4 tracking-wide"
         >
-          RAW ENERGY. EXPLOSIVE CHAOS. UNAPOLOGETIC ROCK.
+          {hero.tagline}
         </motion.p>
 
         {/* Personnel Lineup Highlight */}
@@ -91,17 +129,20 @@ export default function Hero({ onPlayFeaturedTrack }) {
           transition={{ duration: 0.7, delay: 0.4 }}
           className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm font-tech text-neutral-400 mb-8 border-y border-neutral-800/80 py-2.5 max-w-2xl"
         >
-          <span className="text-white font-semibold flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> ARIEF : Guitar, Vocals
-          </span>
-          <span className="text-neutral-600 hidden sm:inline">&bull;</span>
-          <span className="text-white font-semibold flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> GANJAR : Bass
-          </span>
-          <span className="text-neutral-600 hidden sm:inline">&bull;</span>
-          <span className="text-white font-semibold flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> KIMAO : Drum
-          </span>
+          {members.map((member, idx) => (
+            <React.Fragment key={member.id || idx}>
+              <span className="text-white font-semibold flex items-center gap-1.5">
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: currentTheme.primaryColor }}
+                />
+                {member.name.toUpperCase()} : {member.role}
+              </span>
+              {idx < members.length - 1 && (
+                <span className="text-neutral-600 hidden sm:inline">&bull;</span>
+              )}
+            </React.Fragment>
+          ))}
         </motion.div>
 
         {/* Action Call to Action Buttons */}
@@ -114,29 +155,30 @@ export default function Hero({ onPlayFeaturedTrack }) {
           {/* Play Music Button */}
           <button
             onClick={onPlayFeaturedTrack}
-            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-red-700 via-red-600 to-red-800 hover:from-red-600 hover:to-red-700 text-white font-tech font-bold uppercase tracking-wider text-sm rounded-lg shadow-xl shadow-red-950/60 border border-red-500/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all group"
+            style={{ backgroundColor: currentTheme.primaryColor }}
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 text-white font-tech font-bold uppercase tracking-wider text-sm rounded-lg shadow-xl border border-white/20 transform hover:-translate-y-0.5 active:translate-y-0 transition-all group cursor-pointer"
           >
             <div className="w-7 h-7 rounded-full bg-black/40 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
             </div>
-            <span>DENGARKAN MUSIK & DISCOGRAPHY</span>
+            <span>DENGARKAN MUSIK &amp; DISCOGRAPHY</span>
           </button>
 
           {/* Tour Gigs Button */}
           <a
             href="#gigs"
-            className="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-4 bg-neutral-900/90 hover:bg-neutral-800 text-neutral-200 hover:text-white font-tech font-bold uppercase tracking-wider text-sm rounded-lg border border-neutral-700 hover:border-red-600 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-4 bg-neutral-900/90 hover:bg-neutral-800 text-neutral-200 hover:text-white font-tech font-bold uppercase tracking-wider text-sm rounded-lg border border-neutral-700 hover:border-white/50 transition-all"
           >
-            <Calendar className="w-4 h-4 text-red-500" />
-            <span>JADWAL GIGS & TIKET</span>
+            <Calendar className="w-4 h-4" style={{ color: currentTheme.primaryColor }} />
+            <span>JADWAL GIGS &amp; TIKET</span>
           </a>
 
           {/* Booking Contact Button */}
           <a
             href="#booking"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-4 bg-transparent hover:bg-red-950/20 text-neutral-300 hover:text-red-400 font-tech font-bold uppercase tracking-wider text-sm rounded-lg border border-neutral-800 hover:border-red-900 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-4 bg-transparent hover:bg-white/5 text-neutral-300 hover:text-white font-tech font-bold uppercase tracking-wider text-sm rounded-lg border border-neutral-800 hover:border-neutral-700 transition-all"
           >
-            <MessageSquare className="w-4 h-4 text-neutral-400 group-hover:text-red-400" />
+            <MessageSquare className="w-4 h-4 text-neutral-400" />
             <span>BOOKING INFO</span>
           </a>
         </motion.div>
@@ -149,16 +191,24 @@ export default function Hero({ onPlayFeaturedTrack }) {
           className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl text-left"
         >
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl text-red-500 tracking-wider">7 SINGLES</div>
+            <div className="font-bebas text-3xl tracking-wider" style={{ color: currentTheme.primaryColor }}>
+              {config.singles.length} SINGLES
+            </div>
             <div className="text-xs font-tech text-neutral-400 uppercase">Resmi Dirilis</div>
           </div>
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl text-white tracking-wider">TRIO POWER</div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">Guitar, Bass, Drum</div>
+            <div className="font-bebas text-3xl text-white tracking-wider">
+              {members.length === 3 ? 'TRIO POWER' : `${members.length} MEMBERS`}
+            </div>
+            <div className="text-xs font-tech text-neutral-400 uppercase">
+              {members.map(m => m.name).join(', ')}
+            </div>
           </div>
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl text-red-500 tracking-wider">90'S ROOTS</div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">Seattle Sound & Grunge</div>
+            <div className="font-bebas text-3xl tracking-wider" style={{ color: currentTheme.primaryColor }}>
+              90'S ROOTS
+            </div>
+            <div className="text-xs font-tech text-neutral-400 uppercase">Seattle Sound &amp; Grunge</div>
           </div>
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
             <div className="font-bebas text-3xl text-white tracking-wider">DIY SCENE</div>
