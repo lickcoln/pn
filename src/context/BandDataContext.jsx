@@ -9,6 +9,7 @@ import {
   SITE_IMAGES
 } from '../data/bandData'
 import { CONTENT_VERSION, migrateLegacyContent } from '../lib/contentMigration'
+import { sanitizeConfig } from '../lib/sanitizeConfig'
 import {
   isSupabaseConfigured,
   supabase,
@@ -123,7 +124,8 @@ const PUBLISH_DELAY_MS = 700
 // current default copy (swap items that were never edited, see contentMigration.js)
 function mergeConfig(saved) {
   const content = migrateLegacyContent(saved, DEFAULT_CONFIG)
-  return {
+  // sanitizeConfig makes sure a badly shaped value cannot break a component
+  return sanitizeConfig({
     ...DEFAULT_CONFIG,
     ...content,
     theme: { ...DEFAULT_CONFIG.theme, ...(content.theme || {}) },
@@ -131,7 +133,7 @@ function mergeConfig(saved) {
     contact: { ...DEFAULT_CONFIG.contact, ...(content.contact || {}) },
     images: { ...DEFAULT_CONFIG.images, ...(content.images || {}) },
     contentVersion: CONTENT_VERSION
-  }
+  }, DEFAULT_CONFIG, Object.keys(THEME_PRESETS))
 }
 
 function readStored(key) {

@@ -1,18 +1,23 @@
 import React from 'react'
-import { ArrowUp, Phone, Mail, Heart, Flame } from 'lucide-react'
-import { InstagramIcon, YoutubeIcon, SpotifyIcon, SoundCloudIcon } from './SocialIcons'
+import { ArrowUp, Phone, Mail } from 'lucide-react'
+import { SOCIAL_STYLES } from './socialStyles'
+import { formatWhatsApp, socialChannels, whatsappLink } from '../lib/contactInfo'
+import { requestAdminPortal } from '../lib/adminEvents'
 import { useBandData } from '../context/BandDataContext'
+
+const THIS_YEAR = new Date().getFullYear()
 
 export default function Footer() {
   const { config, currentTheme } = useBandData()
   const { contact, members, hero } = config
+  const channels = socialChannels(contact)
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <footer className="bg-black border-t border-neutral-900 py-16 relative overflow-hidden">
+    <footer className="bg-black border-t border-neutral-900 py-10 sm:py-16 relative overflow-hidden">
       
       {/* Background Accent */}
       <div
@@ -22,7 +27,7 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-neutral-900">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 pb-8 sm:pb-12 border-b border-neutral-900">
           
           {/* Logo & Bio Info */}
           <div className="md:col-span-5 space-y-4">
@@ -41,7 +46,7 @@ export default function Footer() {
             </div>
 
             <p className="text-xs font-tech text-neutral-400 leading-relaxed max-w-sm">
-              Rooted in the gritty distortion-heavy guitar riffs of Nirvana and 90's Seattle sound, blended with the raw energy of Indonesian underground scene.
+              Rooted in the gritty distortion-heavy guitar riffs of Nirvana and the 90's Seattle sound, blended with the raw energy of the Indonesian underground scene.
             </p>
 
             <div className="text-xs font-tech text-neutral-500">
@@ -50,8 +55,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Nav Links */}
-          <div className="md:col-span-3 space-y-3 font-tech text-xs">
+          {/* Quick Nav Links (phones already have the tab bar at the bottom) */}
+          <div className="hidden md:block md:col-span-3 space-y-3 font-tech text-xs">
             <span className="text-white font-bold uppercase tracking-wider block text-sm font-bebas">
               SITE MENU
             </span>
@@ -72,60 +77,40 @@ export default function Footer() {
             </span>
 
             <div className="flex flex-wrap gap-2.5">
-              <a
-                href={contact.instagram}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-pink-400 hover:border-pink-600/70 transition-colors"
-                title="Instagram @paranoid.noise"
-              >
-                <InstagramIcon className="w-5 h-5" />
-              </a>
+              {channels.map(({ key, label, url, handle }) => {
+                const { Icon, hoverClass } = SOCIAL_STYLES[key]
+                const name = handle === label ? label : `${label} ${handle}`
+                return (
+                  <a
+                    key={key}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 transition-colors ${hoverClass}`}
+                    title={name}
+                    aria-label={name}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </a>
+                )
+              })}
 
               <a
-                href={contact.spotify}
+                href={whatsappLink(contact.whatsappRaw)}
                 target="_blank"
                 rel="noreferrer"
-                className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-green-400 hover:border-green-600/70 transition-colors"
-                title="Spotify Paranoid Noise"
-              >
-                <SpotifyIcon className="w-5 h-5" />
-              </a>
-
-              <a
-                href={contact.youtube}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-red-500 hover:border-red-600/70 transition-colors"
-                title="YouTube @paranoid.noise"
-              >
-                <YoutubeIcon className="w-5 h-5" />
-              </a>
-
-              <a
-                href={contact.soundcloud}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-orange-400 hover:border-orange-600/70 transition-colors"
-                title="SoundCloud Paranoid Noise"
-              >
-                <SoundCloudIcon className="w-5 h-5" />
-              </a>
-
-              <a
-                href={`https://wa.me/${contact.whatsappRaw}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-green-400 hover:border-green-600/70 transition-colors"
+                className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-green-400 hover:border-green-600/70 transition-colors"
                 title="WhatsApp Band"
+                aria-label="WhatsApp the band"
               >
                 <Phone className="w-5 h-5" />
               </a>
 
               <a
                 href={`mailto:${contact.email}`}
-                className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-red-400 hover:border-red-600/70 transition-colors"
+                className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-red-400 hover:border-red-600/70 transition-colors"
                 title="Email Band"
+                aria-label="Email the band"
               >
                 <Mail className="w-5 h-5" />
               </a>
@@ -133,7 +118,7 @@ export default function Footer() {
 
             <div className="pt-2 text-xs font-tech text-neutral-400 space-y-1">
               <div><strong className="text-neutral-200">Email:</strong> {contact.email}</div>
-              <div><strong className="text-neutral-200">WhatsApp:</strong> {contact.whatsappDisplay}</div>
+              <div><strong className="text-neutral-200">WhatsApp:</strong> {formatWhatsApp(contact.whatsappRaw)}</div>
             </div>
           </div>
 
@@ -142,17 +127,27 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-tech text-neutral-500">
           <div>
-            &copy; {new Date().getFullYear()} PARANOID NOISE. All Rights Reserved. Built for the Indonesian Underground.
+            &copy; {THIS_YEAR} PARANOID NOISE. All Rights Reserved. Built for the Indonesian Underground.
           </div>
 
-          {/* Scroll To Top Button */}
-          <button
-            onClick={scrollToTop}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-red-600 text-neutral-300 hover:text-white transition-colors"
-          >
-            <span>BACK TO TOP</span>
-            <ArrowUp className="w-3.5 h-3.5 text-red-500" />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Phones have no floating lock (it covered the page), so the admin signs in from here */}
+            <button
+              onClick={requestAdminPortal}
+              className="px-3 py-2 rounded-xl text-neutral-600 hover:text-neutral-300 transition-colors lg:hidden"
+            >
+              Admin login
+            </button>
+
+            {/* Scroll To Top Button */}
+            <button
+              onClick={scrollToTop}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-red-600 text-neutral-300 hover:text-white transition-colors"
+            >
+              <span>BACK TO TOP</span>
+              <ArrowUp className="w-3.5 h-3.5 text-red-500" />
+            </button>
+          </div>
         </div>
 
       </div>

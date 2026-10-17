@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ShoppingBag, Radio, Volume2, VolumeX, Flame } from 'lucide-react'
+import { Menu, X, ShoppingBag, Flame } from 'lucide-react'
 import { audioEngine } from '../utils/audioSynth'
+import { socialChannels } from '../lib/contactInfo'
 import { useBandData } from '../context/BandDataContext'
 
 export default function Navbar({ cartCount, onOpenCart, distortionActive, onToggleDistortion }) {
   const { config } = useBandData()
+  const channels = socialChannels(config.contact)
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -13,7 +15,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
     const handleScroll = () => {
       setScrolled(window.scrollY > 40)
     }
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -78,7 +80,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleLinkClick(e, link.href)}
-                className="text-xs uppercase tracking-widest font-tech font-semibold text-neutral-300 hover:text-white hover:text-red-400 relative py-1 transition-colors group"
+                className="text-xs uppercase tracking-widest font-tech font-semibold text-neutral-300 hover:text-red-400 relative py-1 transition-colors group"
               >
                 {link.name}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 transition-all duration-300 group-hover:w-full" />
@@ -122,9 +124,15 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
             >
               <ShoppingBag className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                // keyed on the count so the badge pops once each time it changes, instead of bouncing forever
+                <motion.span
+                  key={cartCount}
+                  initial={{ scale: 1.6 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center"
+                >
                   {cartCount}
-                </span>
+                </motion.span>
               )}
             </button>
 
@@ -133,6 +141,7 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
               onClick={() => setIsOpen(!isOpen)}
               className="lg:hidden p-2 rounded-lg bg-neutral-900/80 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors"
               aria-label="Toggle Menu"
+              aria-expanded={isOpen}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -187,44 +196,19 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
                 </button>
               </div>
 
-              {/* Mobile Social Links */}
-              <div className="flex items-center justify-center gap-4 pt-3 text-xs text-neutral-400 font-tech">
-                <a
-                  href={config.contact.instagram}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-red-400 transition-colors"
-                >
-                  Instagram
-                </a>
-                <span>&bull;</span>
-                <a
-                  href={config.contact.spotify}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-red-400 transition-colors"
-                >
-                  Spotify
-                </a>
-                <span>&bull;</span>
-                <a
-                  href={config.contact.youtube}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-red-400 transition-colors"
-                >
-                  YouTube
-                </a>
-                <span>&bull;</span>
-                <a
-                  href={config.contact.soundcloud}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-red-400 transition-colors"
-                >
-                  SoundCloud
-                </a>
-              </div>
+              {/* Mobile Social Links (a channel without a link is left out) */}
+              {channels.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-3 text-xs text-neutral-400 font-tech">
+                  {channels.map(({ key, label, url }, index) => (
+                    <React.Fragment key={key}>
+                      {index > 0 && <span aria-hidden="true">&bull;</span>}
+                      <a href={url} target="_blank" rel="noreferrer" className="py-1.5 hover:text-red-400 transition-colors">
+                        {label}
+                      </a>
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}

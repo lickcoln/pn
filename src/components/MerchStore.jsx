@@ -1,6 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingBag, Check, Plus, Minus, Trash2, Send, X, Flame, Sparkles } from 'lucide-react'
+import { ShoppingBag, Check, Plus, Minus, Trash2, Send, X } from 'lucide-react'
+import { whatsappLink } from '../lib/contactInfo'
+import { formatIdr, isSoldOutLabel } from '../lib/format'
+import { useModal } from '../lib/useModal'
 import { useBandData } from '../context/BandDataContext'
 
 export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, onRemoveFromCart, isCartOpen, onCloseCart }) {
@@ -8,49 +11,48 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
   const merchItems = config.merch
   const [selectedSizes, setSelectedSizes] = useState({})
   const [addedItemNotice, setAddedItemNotice] = useState(null)
+  const noticeTimer = useRef(null)
 
-  const handleSizeChange = (itemId, size) => {
-    setSelectedSizes(prev => ({ ...prev, [itemId]: size }))
-  }
+  useModal(isCartOpen, onCloseCart)
+  useEffect(() => () => clearTimeout(noticeTimer.current), [])
+
+  const sizeFor = (item) => (item.sizes.includes(selectedSizes[item.id]) ? selectedSizes[item.id] : item.sizes[0])
 
   const handleAddToCartClick = (item) => {
-    const size = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
-    onAddToCart({ ...item, selectedSize: size })
+    onAddToCart({ ...item, selectedSize: sizeFor(item) })
     setAddedItemNotice(item.id)
-    setTimeout(() => setAddedItemNotice(null), 2000)
+    clearTimeout(noticeTimer.current)
+    noticeTimer.current = setTimeout(() => setAddedItemNotice(null), 2000)
   }
 
   const handleDirectWhatsAppOrder = (item) => {
-    const size = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
-    const text = `Hello Paranoid Noise! I would like to order official merchandise:\n\n*Item:* ${item.name}\n*Size/Variant:* ${size}\n*Price:* ${item.priceFormatted}\n\nPlease let me know about stock availability and shipping to my address. Thank you!`
-    const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
-    window.open(url, '_blank')
+    const text = `Hello Paranoid Noise! I would like to order official merchandise:\n\n*Item:* ${item.name}\n*Size/Variant:* ${sizeFor(item)}\n*Price:* ${formatIdr(item.price)}\n\nPlease let me know about stock availability and shipping to my address. Thank you!`
+    window.open(whatsappLink(config.contact.whatsappRaw, text), '_blank')
   }
 
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0)
-  const cartTotalFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(cartTotal)
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0)
 
   const handleCheckoutViaWhatsApp = () => {
     if (cart.length === 0) return
     let text = `Hello Paranoid Noise! I would like to order the following merchandise:\n\n`
     cart.forEach((item, idx) => {
-      text += `${idx + 1}. ${item.name} (${item.selectedSize}) x ${item.quantity} = IDR ${(item.price * item.quantity).toLocaleString('en-US')}\n`
+      text += `${idx + 1}. ${item.name} (${item.selectedSize}) x ${item.quantity} = ${formatIdr(item.price * item.quantity)}\n`
     })
-    text += `\n*TOTAL:* ${cartTotalFormatted}\n\nPlease send me the payment account details and the shipping form. Rock on!`
-    const url = `https://wa.me/${config.contact.whatsappRaw}?text=${encodeURIComponent(text)}`
-    window.open(url, '_blank')
+    text += `\n*TOTAL:* ${formatIdr(cartTotal)}\n\nPlease send me the payment account details and the shipping form. Rock on!`
+    window.open(whatsappLink(config.contact.whatsappRaw, text), '_blank')
   }
 
   return (
-    <section id="merch" className="py-24 bg-[#080808] relative overflow-hidden border-t border-neutral-900">
-      
+    <section id="merch" className="py-16 sm:py-24 bg-[#080808] relative overflow-hidden border-t border-neutral-900">
+
       {/* Background Ambience */}
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-red-950/20 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-neutral-800">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-16 pb-6 border-b border-neutral-800">
           <div>
             <div
               className="flex items-center gap-2 font-tech font-bold text-xs uppercase tracking-widest mb-2"
@@ -68,212 +70,261 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
         </div>
 
         {/* Merch Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {merchItems.map((item, idx) => {
-            const currentSize = selectedSizes[item.id] || (item.sizes && item.sizes[0]) || 'All Size'
-            const isJustAdded = addedItemNotice === item.id
+        {merchItems.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-neutral-800 p-8 text-center font-tech text-sm text-neutral-400">
+            The merch table is empty right now. New gear is coming soon.
+          </div>
+        ) : (
+          // two small cards per row on a phone, so six products are not six screens
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
+            {merchItems.map((item, idx) => {
+              const currentSize = sizeFor(item)
+              const isJustAdded = addedItemNotice === item.id
+              const soldOut = isSoldOutLabel(item.stock)
 
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="relative rounded-2xl bg-neutral-950/90 border border-neutral-800/90 hover:border-red-600/80 p-5 flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1.5 shadow-xl"
-              >
-                <div>
-                  
-                  {/* Product Image */}
-                  <div className="relative rounded-xl overflow-hidden aspect-square border border-neutral-800 mb-4 bg-black group-hover:border-red-600/50 transition-colors flex items-center justify-center p-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="max-h-full max-w-full object-contain filter drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
-                    />
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: Math.min(idx, 5) * 0.1 }}
+                  className="relative rounded-2xl bg-neutral-950/90 border border-neutral-800/90 hover:border-red-600/80 p-3 sm:p-5 flex flex-col justify-between transition-all duration-300 group sm:hover:-translate-y-1.5 shadow-xl"
+                >
+                  <div>
 
-                    {/* Stock Status Badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-neutral-800 text-[10px] font-tech font-bold uppercase tracking-wider text-green-400">
-                      {item.stock}
-                    </div>
+                    {/* Product Image */}
+                    <div className="relative rounded-xl overflow-hidden aspect-square border border-neutral-800 mb-3 sm:mb-4 bg-black group-hover:border-red-600/50 transition-colors flex items-center justify-center p-2 sm:p-4">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        loading="lazy"
+                        decoding="async"
+                        className={`max-h-full max-w-full object-contain filter drop-shadow-xl group-hover:scale-105 transition-transform duration-500 ${soldOut ? 'opacity-50 grayscale' : ''}`}
+                      />
 
-                    <div className="absolute top-2.5 right-2.5 bg-red-950/80 border border-red-800 text-[10px] font-tech font-bold uppercase tracking-wider text-red-300 px-2 py-1 rounded">
-                      {item.category}
-                    </div>
-                  </div>
-
-                  {/* Product Title */}
-                  <h3 className="font-bebas text-2xl sm:text-3xl text-white tracking-wide leading-tight group-hover:text-red-500 transition-colors mb-1">
-                    {item.name}
-                  </h3>
-
-                  {/* Price */}
-                  <div className="font-tech text-lg font-bold text-red-500 mb-2">
-                    {item.priceFormatted}
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-xs font-tech text-neutral-400 leading-relaxed mb-4 line-clamp-2">
-                    {item.description}
-                  </p>
-
-                  {/* Size Selector */}
-                  <div className="mb-4">
-                    <span className="text-[11px] font-tech font-bold text-neutral-400 uppercase block mb-1.5">
-                      SELECT SIZE / VARIANT:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {item.sizes.map((sz) => (
-                        <button
-                          key={sz}
-                          onClick={() => handleSizeChange(item.id, sz)}
-                          className={`px-3 py-1 rounded-md text-xs font-tech font-bold border transition-colors ${
-                            currentSize === sz
-                              ? 'bg-red-600 border-red-500 text-white'
-                              : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-white'
+                      {/* Stock Status Badge */}
+                      {item.stock && (
+                        <div
+                          className={`absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-black/80 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded border border-neutral-800 text-[9px] sm:text-[10px] font-tech font-bold uppercase tracking-wider ${
+                            soldOut ? 'text-neutral-400' : 'text-green-400'
                           }`}
                         >
-                          {sz}
-                        </button>
-                      ))}
+                          {item.stock}
+                        </div>
+                      )}
+
+                      {/* The category would collide with the stock badge on a small phone card */}
+                      {item.category && (
+                        <div className="hidden sm:block absolute top-2.5 right-2.5 bg-red-950/80 border border-red-800 text-[10px] font-tech font-bold uppercase tracking-wider text-red-300 px-2 py-1 rounded">
+                          {item.category}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Product Title */}
+                    <h3 className="font-bebas text-lg sm:text-3xl text-white tracking-wide leading-tight group-hover:text-red-500 transition-colors mb-1 line-clamp-3 sm:line-clamp-none">
+                      {item.name}
+                    </h3>
+
+                    {/* Price */}
+                    <div className="font-tech text-base sm:text-lg font-bold text-red-500 mb-2">
+                      {formatIdr(item.price)}
+                    </div>
+
+                    {/* Description (the card is too narrow for it on a phone) */}
+                    <p className="hidden sm:block text-xs font-tech text-neutral-400 leading-relaxed mb-4 line-clamp-2">
+                      {item.description}
+                    </p>
+
+                    {/* Size Selector (a single variant needs no choosing) */}
+                    <div className="mb-3 sm:mb-4">
+                      {item.sizes.length > 1 ? (
+                        <>
+                          <span className="text-[10px] sm:text-[11px] font-tech font-bold text-neutral-400 uppercase block mb-1.5">
+                            SELECT SIZE / VARIANT:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2" role="group" aria-label={`Size for ${item.name}`}>
+                            {item.sizes.map((sz) => (
+                              <button
+                                key={sz}
+                                onClick={() => setSelectedSizes((prev) => ({ ...prev, [item.id]: sz }))}
+                                aria-pressed={currentSize === sz}
+                                className={`min-w-9 sm:min-w-10 px-2.5 sm:px-3 py-2 rounded-md text-[11px] sm:text-xs font-tech font-bold border transition-colors ${
+                                  currentSize === sz
+                                    ? 'bg-red-600 border-red-500 text-white'
+                                    : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-white'
+                                }`}
+                              >
+                                {sz}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="inline-block px-3 py-1.5 rounded-md border border-neutral-800 bg-neutral-900 text-[11px] sm:text-xs font-tech font-bold text-neutral-300">
+                          {item.sizes[0]}
+                        </span>
+                      )}
+                    </div>
+
                   </div>
 
-                </div>
-
-                {/* Actions */}
-                <div className="pt-3 border-t border-neutral-900 space-y-2">
-                  <button
-                    onClick={() => handleAddToCartClick(item)}
-                    className={`w-full py-2.5 rounded-xl font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                      isJustAdded
-                        ? 'bg-green-600 text-white'
-                        : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-800 hover:border-red-600'
-                    }`}
-                  >
-                    {isJustAdded ? (
-                      <>
-                        <Check className="w-4 h-4" /> ADDED TO CART
-                      </>
+                  {/* Actions */}
+                  <div className="pt-3 border-t border-neutral-900 space-y-2">
+                    {soldOut ? (
+                      <div className="w-full py-3 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-tech font-bold text-xs uppercase tracking-wider text-center">
+                        SOLD OUT
+                      </div>
                     ) : (
                       <>
-                        <ShoppingBag className="w-4 h-4 text-red-500" /> ADD TO CART
+                        <button
+                          onClick={() => handleAddToCartClick(item)}
+                          className={`w-full py-3 rounded-xl font-tech font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
+                            isJustAdded
+                              ? 'bg-green-600 text-white'
+                              : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-800 hover:border-red-600'
+                          }`}
+                        >
+                          {isJustAdded ? (
+                            <>
+                              <Check className="w-4 h-4" /> ADDED TO CART
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingBag className="w-4 h-4 text-red-500" /> ADD TO CART
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleDirectWhatsAppOrder(item)}
+                          className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 transition-colors shadow-md shadow-red-950/50"
+                        >
+                          <Send className="w-3.5 h-3.5" /> ORDER VIA WHATSAPP
+                        </button>
                       </>
                     )}
-                  </button>
+                  </div>
 
-                  <button
-                    onClick={() => handleDirectWhatsAppOrder(item)}
-                    className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-tech font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-md shadow-red-950/50"
-                  >
-                    <Send className="w-3.5 h-3.5" /> ORDER DIRECTLY VIA WHATSAPP
-                  </button>
-                </div>
-
-              </motion.div>
-            )
-          })}
-        </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
 
       </div>
 
       {/* Shopping Cart Drawer / Modal */}
       <AnimatePresence>
         {isCartOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-md">
+          <motion.div
+            key="cart"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/80 backdrop-blur-md"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) onCloseCart()
+            }}
+          >
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Merchandise cart"
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="w-full max-w-md h-full bg-neutral-950 border-l border-neutral-800 p-6 flex flex-col justify-between text-left shadow-2xl"
+              className="w-full max-w-md h-full bg-neutral-950 border-l border-neutral-800 p-5 sm:p-6 flex flex-col text-left shadow-2xl"
             >
-              <div>
-                {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-neutral-800 mb-6">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-red-500" />
-                    <h3 className="font-bebas text-2xl text-white tracking-wide">
-                      MERCHANDISE CART ({cart.length})
-                    </h3>
-                  </div>
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-neutral-800 mb-4 shrink-0">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-red-500" />
+                  <h3 className="font-bebas text-2xl text-white tracking-wide">
+                    MERCHANDISE CART ({cartCount})
+                  </h3>
+                </div>
+                <button
+                  onClick={onCloseCart}
+                  aria-label="Close cart"
+                  className="p-2.5 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Items List: this is the part that scrolls, so the total and the checkout button never leave the screen */}
+              {cart.length === 0 ? (
+                <div className="grow text-center py-16 text-neutral-500 font-tech">
+                  <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Your cart is empty.</p>
                   <button
                     onClick={onCloseCart}
-                    className="p-2 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white transition-colors"
+                    className="mt-4 px-4 py-2.5 rounded-lg bg-neutral-900 text-red-400 text-xs font-bold uppercase"
                   >
-                    <X className="w-5 h-5" />
+                    Browse the Merch Collection
                   </button>
                 </div>
-
-                {/* Items List */}
-                {cart.length === 0 ? (
-                  <div className="text-center py-16 text-neutral-500 font-tech">
-                    <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Your cart is empty.</p>
-                    <button
-                      onClick={onCloseCart}
-                      className="mt-4 px-4 py-2 rounded-lg bg-neutral-900 text-red-400 text-xs font-bold uppercase"
+              ) : (
+                <div className="grow min-h-0 space-y-3 overflow-y-auto pr-1">
+                  {cart.map((item) => (
+                    <div
+                      key={`${item.id}-${item.selectedSize}`}
+                      className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 flex items-center justify-between gap-3"
                     >
-                      Browse the Merch Collection
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
-                    {cart.map((item, idx) => (
-                      <div
-                        key={`${item.id}-${item.selectedSize}-${idx}`}
-                        className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 flex items-center justify-between gap-3"
-                      >
-                        <div className="w-12 h-12 rounded-lg bg-black border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center p-1">
-                          <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
-                        </div>
-
-                        <div className="grow min-w-0">
-                          <h4 className="font-tech text-xs font-bold text-white truncate">
-                            {item.name}
-                          </h4>
-                          <span className="text-[11px] font-tech text-neutral-400">
-                            Size: <strong className="text-neutral-200">{item.selectedSize}</strong> &bull; IDR {item.price.toLocaleString('en-US')}
-                          </span>
-                        </div>
-
-                        {/* Quantity Controls */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => onUpdateCartQuantity(item.id, item.selectedSize, Math.max(1, item.quantity - 1))}
-                            className="p-1 rounded bg-neutral-800 text-neutral-300 hover:text-white"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="text-xs font-mono font-bold text-white px-1">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => onUpdateCartQuantity(item.id, item.selectedSize, item.quantity + 1)}
-                            className="p-1 rounded bg-neutral-800 text-neutral-300 hover:text-white"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => onRemoveFromCart(item.id, item.selectedSize)}
-                            className="p-1 rounded bg-red-950/80 text-red-400 hover:text-red-300 ml-1"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
+                      <div className="w-12 h-12 rounded-lg bg-black border border-neutral-800 overflow-hidden shrink-0 flex items-center justify-center p-1">
+                        <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+
+                      <div className="grow min-w-0">
+                        <h4 className="font-tech text-xs font-bold text-white truncate">
+                          {item.name}
+                        </h4>
+                        <span className="text-[11px] font-tech text-neutral-400">
+                          Size: <strong className="text-neutral-200">{item.selectedSize}</strong> &bull; {formatIdr(item.price)}
+                        </span>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => onUpdateCartQuantity(item.id, item.selectedSize, Math.max(1, item.quantity - 1))}
+                          aria-label={`One less ${item.name}`}
+                          className="p-2 rounded bg-neutral-800 text-neutral-300 hover:text-white"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="text-xs font-mono font-bold text-white w-6 text-center">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => onUpdateCartQuantity(item.id, item.selectedSize, item.quantity + 1)}
+                          aria-label={`One more ${item.name}`}
+                          className="p-2 rounded bg-neutral-800 text-neutral-300 hover:text-white"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onRemoveFromCart(item.id, item.selectedSize)}
+                          aria-label={`Remove ${item.name} from the cart`}
+                          className="p-2 rounded bg-red-950/80 text-red-400 hover:text-red-300 ml-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Cart Footer */}
               {cart.length > 0 && (
-                <div className="pt-4 border-t border-neutral-800 space-y-4">
+                <div className="pt-4 mt-4 border-t border-neutral-800 space-y-4 shrink-0">
                   <div className="flex items-center justify-between font-tech">
                     <span className="text-xs text-neutral-400 uppercase font-semibold">Subtotal:</span>
-                    <span className="text-lg font-bold text-white font-mono">{cartTotalFormatted}</span>
+                    <span className="text-lg font-bold text-white font-mono">{formatIdr(cartTotal)}</span>
                   </div>
 
                   <button
@@ -286,7 +337,7 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
               )}
 
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

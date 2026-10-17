@@ -14,6 +14,8 @@ const SECTIONS = [
 ]
 
 const SHOW_TOP_BUTTON_AFTER_PX = 700
+const SCROLL_UP_REVEAL_PX = 40 // how far the visitor scrolls back up before the button appears
+const HIDE_TOP_BUTTON_AFTER_MS = 3500
 
 // The section that crosses the middle of the screen is the one being read
 function useActiveSection() {
@@ -44,11 +46,34 @@ export default function MobileNav() {
   const [active, setActive] = useActiveSection()
   const [showTop, setShowTop] = useState(false)
 
+  // The button only appears when the visitor scrolls back UP, and fades away again. While reading downwards it
+  // stays out of the way (it used to sit on top of links at the right edge of the page).
   useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > SHOW_TOP_BUTTON_AFTER_PX)
-    onScroll()
+    let lastY = window.scrollY
+    let upDistance = 0 // how far the visitor has scrolled up without turning back down
+    let hideTimer = 0
+    const onScroll = () => {
+      const y = window.scrollY
+      const delta = y - lastY
+      lastY = y
+      if (y <= SHOW_TOP_BUTTON_AFTER_PX || delta > 0) {
+        upDistance = 0
+        setShowTop(false)
+        clearTimeout(hideTimer)
+      } else if (delta < 0) {
+        upDistance -= delta
+        if (upDistance > SCROLL_UP_REVEAL_PX) {
+          setShowTop(true)
+          clearTimeout(hideTimer)
+          hideTimer = window.setTimeout(() => setShowTop(false), HIDE_TOP_BUTTON_AFTER_MS)
+        }
+      }
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      clearTimeout(hideTimer)
+    }
   }, [])
 
   const goTo = (id) => {

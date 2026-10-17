@@ -10,8 +10,22 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
 
+// A form must not spin forever on a bad connection: after this long the visitor is told it was not sent
+const SUBMIT_TIMEOUT_MS = 15000
+
+async function withTimeout(run, ms = SUBMIT_TIMEOUT_MS) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  try {
+    return await run(controller.signal)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /**
- * Save booking inquiry to Supabase or fallback to LocalStorage
+ * Save booking inquiry to Supabase or fallback to LocalStorage.
+ * `mode` says where it ended up: only 'supabase' means the band can see it.
  */
 export async function submitBookingInquiry(data) {
   const timestamp = new Date().toISOString()
@@ -20,10 +34,10 @@ export async function submitBookingInquiry(data) {
   if (isSupabaseConfigured && supabase) {
     try {
       // No .select(): anon only has INSERT under RLS, returning the row would need a SELECT policy
-      const { error } = await supabase
-        .from('booking_inquiries')
-        .insert([payload])
-      
+      const { error } = await withTimeout((signal) =>
+        supabase.from('booking_inquiries').insert([payload]).abortSignal(signal)
+      )
+
       if (error) throw error
       return { success: true, mode: 'supabase', data: payload }
     } catch (err) {
@@ -43,17 +57,17 @@ export async function submitBookingInquiry(data) {
 }
 
 /**
- * Save ticket RSVP to Supabase or fallback
+ * Save ticket RSVP to Supabase or fallback (same `mode` rule as submitBookingInquiry)
  */
 export async function submitTicketRsvp(data) {
   const payload = { ...data, created_at: new Date().toISOString() }
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { error } = await supabase
-        .from('ticket_rsvps')
-        .insert([payload])
-      
+      const { error } = await withTimeout((signal) =>
+        supabase.from('ticket_rsvps').insert([payload]).abortSignal(signal)
+      )
+
       if (error) throw error
       return { success: true, mode: 'supabase', data: payload }
     } catch (err) {

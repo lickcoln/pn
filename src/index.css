@@ -92,6 +92,31 @@ html {
   scroll-padding-top: 4.5rem;
 }
 
+/* iPhones zoom the whole page when a field smaller than 16px is tapped and never zoom back out.
+   Unlayered CSS beats the utility classes, so every field on a touch screen is 16px. */
+@media (pointer: coarse) {
+  input:not([type='range']):not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* People who ask their system for less motion get no endless animations */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Sliders (equalizer, seek bar): the filled part uses --fill, and the big thumb is easy to drag on a phone */
 .pn-range {
   -webkit-appearance: none;

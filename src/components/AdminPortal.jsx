@@ -38,6 +38,7 @@ import { useBandData } from '../context/BandDataContext'
 import { listBookingInquiries, listTicketRsvps, deleteMedia } from '../lib/supabase'
 import { BAND_MEMBERS, SINGLES_DISCOGRAPHY, MERCH_ITEMS, IMAGE_SLOTS } from '../data/bandData'
 import MediaField from './MediaField'
+import { OPEN_ADMIN_EVENT } from '../lib/adminEvents'
 
 // The shipped default of one field of a list item (so "Reset" can bring it back); '' for items the admin added
 const defaultOf = (defaults, id, field) => defaults.find((item) => item.id === id)?.[field] || ''
@@ -155,20 +156,28 @@ export default function AdminPortal() {
     setContactForm(config.contact)
   }, [config])
 
-  // Keyboard shortcut Ctrl + Shift + A
+  // Keyboard shortcut Ctrl + Shift + A, and the "Admin login" link in the footer (which is how a phone gets in,
+  // because the floating lock is hidden there so it cannot cover the page)
   useEffect(() => {
+    const toggleAdmin = () => {
+      if (isAdmin) {
+        setShowDashboard(prev => !prev)
+      } else {
+        setShowLoginModal(true)
+      }
+    }
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault()
-        if (isAdmin) {
-          setShowDashboard(prev => !prev)
-        } else {
-          setShowLoginModal(true)
-        }
+        toggleAdmin()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener(OPEN_ADMIN_EVENT, toggleAdmin)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener(OPEN_ADMIN_EVENT, toggleAdmin)
+    }
   }, [isAdmin])
 
   // Load RSVPs and booking inquiries
@@ -439,7 +448,7 @@ export default function AdminPortal() {
           className={`p-2 rounded-full border transition-all duration-300 cursor-pointer ${
             isAdmin
               ? 'bg-neutral-900 border-red-600 text-red-400 opacity-90 hover:opacity-100 shadow-md shadow-red-950/50'
-              : 'bg-black/40 border-neutral-800 text-neutral-600 hover:text-neutral-300 opacity-30 hover:opacity-90'
+              : 'hidden lg:block bg-black/40 border-neutral-800 text-neutral-600 hover:text-neutral-300 opacity-30 hover:opacity-90'
           }`}
           title={isAdmin ? 'Admin mode is on (click to open the panel)' : 'Hidden administrator access (PN)'}
           aria-label="Admin access"
