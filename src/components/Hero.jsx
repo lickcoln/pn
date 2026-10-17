@@ -1,12 +1,34 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Play, Calendar, Zap, MessageSquare, Volume2 } from 'lucide-react'
 import { audioEngine } from '../utils/audioSynth'
 import { useBandData } from '../context/BandDataContext'
 
+const STOMP_RIFF_ID = 'featured'
+const STOMP_RIFF_MS = 8000
+
 export default function Hero({ onPlayFeaturedTrack }) {
   const { config, currentTheme } = useBandData()
   const { hero, members } = config
+  const stompTimer = useRef(0)
+
+  useEffect(() => () => clearTimeout(stompTimer.current), [])
+
+  // The riff loops until something stops it, so the logo works as a switch and the riff also ends by itself
+  const handleStomp = () => {
+    audioEngine.playFootswitchClick()
+    clearTimeout(stompTimer.current)
+    if (audioEngine.isPlaying && audioEngine.currentTrackId === STOMP_RIFF_ID) {
+      audioEngine.stop()
+      return
+    }
+    audioEngine.playTrackRiff(STOMP_RIFF_ID, 'grunge_intro')
+    stompTimer.current = window.setTimeout(() => {
+      if (audioEngine.currentTrackId === STOMP_RIFF_ID) audioEngine.stop()
+    }, STOMP_RIFF_MS)
+  }
+
+  const singlesCount = config.singles.length
 
   const glitchClass = config.theme.glitchIntensity === 'extreme'
     ? 'animate-pulse scale-102'
@@ -22,6 +44,8 @@ export default function Hero({ onPlayFeaturedTrack }) {
         <img
           src={config.images.heroBackground}
           alt="Paranoid Noise Live Concert"
+          fetchPriority="high"
+          decoding="async"
           className="w-full h-full object-cover object-center filter grayscale contrast-125 brightness-40 scale-105"
         />
         {/* Dark Grunge Gradient & Accent Overlays */}
@@ -64,11 +88,17 @@ export default function Hero({ onPlayFeaturedTrack }) {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="relative mb-6 group cursor-pointer"
-          onClick={() => {
-            audioEngine.playFootswitchClick()
-            audioEngine.playTrackRiff('featured', 'grunge_intro')
+          role="button"
+          tabIndex={0}
+          aria-label="Play or stop a guitar riff"
+          onClick={handleStomp}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleStomp()
+            }
           }}
-          title="Click the stompbox to play a guitar riff!"
+          title="Click the stompbox to play a guitar riff (click again to stop it)"
         >
           {/* Backlight glow */}
           <div
@@ -83,6 +113,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
             <img
               src={config.images.logo}
               alt="Paranoid Noise Stompbox"
+              decoding="async"
               className="w-full h-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.9)]"
             />
             {/* Quick interactive hint */}
@@ -192,13 +223,13 @@ export default function Hero({ onPlayFeaturedTrack }) {
         >
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
             <div className="font-bebas text-3xl tracking-wider" style={{ color: currentTheme.primaryColor }}>
-              {config.singles.length} SINGLES
+              {singlesCount} {singlesCount === 1 ? 'SINGLE' : 'SINGLES'}
             </div>
             <div className="text-xs font-tech text-neutral-400 uppercase">Officially Released</div>
           </div>
           <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
             <div className="font-bebas text-3xl text-white tracking-wider">
-              {members.length === 3 ? 'TRIO POWER' : `${members.length} MEMBERS`}
+              {members.length === 3 ? 'TRIO POWER' : `${members.length} ${members.length === 1 ? 'MEMBER' : 'MEMBERS'}`}
             </div>
             <div className="text-xs font-tech text-neutral-400 uppercase">
               {members.map(m => m.name).join(', ')}

@@ -1,7 +1,7 @@
 // Paranoid Noise Band Data: the default content of the website.
 // Anything an admin edits is saved on top of these defaults (see BandDataContext).
 
-export const BAND_BIO = `Paranoid Noise is a punk rock trio that has been making waves in Jakarta, Indonesia's alternative rock scene. Known for their raw energy and explosive performances, they captured essence of the alternative rock movement while it with the unique spirit of Indonesian underground. The band's sound is rooted in the gritty, distortion-heavy guitar riffs of Nirvana and Seattle sound, layered with the deep emotional intensity and explosive rhythms reminiscent oh the 90's grunge scene. Their music speaks to the struggles, frustation and emotional volality of today's youth, with lyrics that explore themes of allenation, rebelion and self-doubt. Paranoid Noise quickly gained attention after their debut show in Bekasi-Jakarta-Bandung's underground venues, delivering electrifying perfomances that have earned them a loyal following. Their sound is powerful, chaotic and unapologetic, and they've played countless gigs across the country, from small clubs to bigger festival stages, building a reputation as one of the most dynamic live acts in the scene today.`
+export const BAND_BIO = `Paranoid Noise is a punk rock trio that has been making waves in Jakarta, Indonesia's alternative rock scene. Known for their raw energy and explosive performances, they captured the essence of the alternative rock movement while blending it with the unique spirit of the Indonesian underground. The band's sound is rooted in the gritty, distortion-heavy guitar riffs of Nirvana and the Seattle sound, layered with the deep emotional intensity and explosive rhythms reminiscent of the 90's grunge scene. Their music speaks to the struggles, frustration and emotional volatility of today's youth, with lyrics that explore themes of alienation, rebellion and self-doubt. Paranoid Noise quickly gained attention after their debut in the underground venues of Bekasi, Jakarta and Bandung, delivering electrifying performances that have earned them a loyal following. Their sound is powerful, chaotic and unapologetic, and they've played countless gigs across the country, from small clubs to bigger festival stages, building a reputation as one of the most dynamic live acts in the scene today.`
 
 export const BAND_MEMBERS = [
   {
@@ -9,7 +9,7 @@ export const BAND_MEMBERS = [
     name: 'Arief',
     role: 'Guitar & Vocals',
     image: '/band/member_arief.png',
-    fallbackImage: '/band/band_rock_4_1270x1526.png',
+    fallbackImage: '/band/band_rock_4_1270x1526.webp',
     gear: 'Fender Jaguar / Kurt Cobain Signature, Boss DS-1 Distortion, EHX Big Muff',
     description: 'Frontman with a raspy, emotional voice and loud guitar riffs drenched in the fuzz and distortion of 90s Seattle grunge.',
     quote: 'Our music is an expression of anger, restlessness, and uncompromising freedom.'
@@ -19,7 +19,7 @@ export const BAND_MEMBERS = [
     name: 'Ganjar',
     role: 'Bass',
     image: '/band/member_ganjar.png',
-    fallbackImage: '/band/band_rock_8_1254x1254.png',
+    fallbackImage: '/band/band_rock_8_1254x1254.webp',
     gear: 'Fender Jazz Bass, Ampeg SVT Classic, SansAmp Bass Driver DI',
     description: "Dense, aggressive, thunderous punk basslines that form the solid foundation of Paranoid Noise's dynamics.",
     quote: 'On stage, there is no barrier between us and the energy of the moshpit.'
@@ -29,7 +29,7 @@ export const BAND_MEMBERS = [
     name: 'Kimao',
     role: 'Drum',
     image: '/band/member_kimao.png',
-    fallbackImage: '/band/band_rock_1_1252x741.png',
+    fallbackImage: '/band/band_rock_1_1252x741.webp',
     gear: 'Mapex Drum Kit, Zildjian Sweet Ride & A-Custom Cymbals, Heavy Punk Sticks',
     description: 'Explosive drumming, pounding tempos, and nonstop hits that pump adrenaline into every live show.',
     quote: 'The drumbeat is the heartbeat of every bit of chaos we create.'
@@ -58,7 +58,7 @@ export const SINGLES_DISCOGRAPHY = [
     year: '2022',
     duration: '3:18',
     color: '#0284c7',
-    coverArt: '/band/band_rock_2_1247x690.png',
+    coverArt: '/band/band_rock_2_1247x690.webp',
     description: 'A deep exploration of the urge to be alone and the weariness of the noise of the world around us.',
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20Diamkan%20Aku',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+Diamkan+Aku',
@@ -72,7 +72,7 @@ export const SINGLES_DISCOGRAPHY = [
     year: '2022',
     duration: '2:56',
     color: '#16a34a',
-    coverArt: '/band/band_rock_3_1269x1269.png',
+    coverArt: '/band/band_rock_3_1269x1269.webp',
     description: 'A high-speed anthem of rebellion with a fast punk rock tempo and shouts of never giving up.',
     spotifyUrl: "https://open.spotify.com/search/Paranoid%20Noise%20I%20Don't%20Surrender",
     youtubeUrl: "https://youtube.com/results?search_query=Paranoid+Noise+I+Don't+Surrender",
@@ -100,7 +100,7 @@ export const SINGLES_DISCOGRAPHY = [
     year: '2022',
     duration: '3:50',
     color: '#38bdf8',
-    coverArt: '/band/band_rock_1_1252x741.png',
+    coverArt: '/band/band_rock_1_1252x741.webp',
     description: "A live-set favorite with a quiet-then-explosive (quiet-loud) dynamic in the style of Nirvana's In Utero.",
     spotifyUrl: 'https://open.spotify.com/search/Paranoid%20Noise%20On%20Antarctica',
     youtubeUrl: 'https://youtube.com/results?search_query=Paranoid+Noise+On+Antarctica',
@@ -128,7 +128,7 @@ export const SINGLES_DISCOGRAPHY = [
     year: '2022',
     duration: '3:32',
     color: '#9333ea',
-    coverArt: '/band/band_rock_9_1264x840.png',
+    coverArt: '/band/band_rock_9_1264x840.webp',
     description: 'A mix of addictive guitar melodies and lyrics about finding yourself that became a crowd-surfing anthem on festival stages.',
     spotifyUrl: "https://open.spotify.com/search/Paranoid%20Noise%20I've%20Got%20My%20Vision",
     youtubeUrl: "https://youtube.com/results?search_query=Paranoid+Noise+I've+Got+My+Vision",
@@ -222,7 +222,7 @@ export const MERCH_ITEMS = [
     price: 375000,
     priceFormatted: 'IDR 375,000',
     category: 'Apparel',
-    image: '/band/band_rock_8_1254x1254.png',
+    image: '/band/band_rock_8_1254x1254.webp',
     sizes: ['M', 'L', 'XL', 'XXL'],
     stock: 'In Stock',
     description: 'Thick 330gsm fleece in washed black, with an embroidered Paranoid Noise logo on the chest and rock graphics printed on the sleeves.'
@@ -266,7 +266,7 @@ export const MERCH_ITEMS = [
     price: 45000,
     priceFormatted: 'IDR 45,000',
     category: 'Accessories',
-    image: '/band/band_rock_10_1270x763.png',
+    image: '/band/band_rock_10_1270x763.webp',
     sizes: ['10 Die-cut Stickers'],
     stock: 'In Stock',
     description: 'A waterproof, scratch-resistant vinyl sticker pack for your guitar, helmet, laptop, skateboard, and pedalboard.'
@@ -304,7 +304,7 @@ export const IMAGE_SLOTS = [
     group: 'Backgrounds',
     label: 'Hero background',
     where: 'Full-screen background behind the headline on the home page',
-    fallback: '/band/band_rock_9_1264x840.png',
+    fallback: '/band/band_rock_9_1264x840.webp',
     maxEdge: 2000
   },
   {
@@ -320,7 +320,7 @@ export const IMAGE_SLOTS = [
     group: 'Photos',
     label: 'Lineup banner',
     where: 'Wide band photo at the top of the Lineup section',
-    fallback: '/band/band_rock_8_1254x1254.png',
+    fallback: '/band/band_rock_8_1254x1254.webp',
     maxEdge: 1800
   },
   {
@@ -328,7 +328,7 @@ export const IMAGE_SLOTS = [
     group: 'Photos',
     label: 'Profile stage banner',
     where: 'Wide strip under the bio in the About section',
-    fallback: '/band/band_rock_10_1270x763.png',
+    fallback: '/band/band_rock_10_1270x763.webp',
     maxEdge: 1600
   },
   {
@@ -336,7 +336,7 @@ export const IMAGE_SLOTS = [
     group: 'Photos',
     label: 'Profile live photo',
     where: 'Large photo next to the bio in the About section',
-    fallback: '/band/band_rock_3_1269x1269.png',
+    fallback: '/band/band_rock_3_1269x1269.webp',
     maxEdge: 1400
   },
   {
@@ -344,7 +344,7 @@ export const IMAGE_SLOTS = [
     group: 'Photos',
     label: 'Profile tile (left)',
     where: 'The "Marshall Stacks & Fuzz" tile in the About section',
-    fallback: '/band/band_rock_7_1269x1267.png',
+    fallback: '/band/band_rock_7_1269x1267.webp',
     maxEdge: 1000
   },
   {
@@ -352,7 +352,7 @@ export const IMAGE_SLOTS = [
     group: 'Photos',
     label: 'Profile tile (right)',
     where: 'The "Mapex Drums & Seattle Riffs" tile in the About section',
-    fallback: '/band/band_rock_2_1247x690.png',
+    fallback: '/band/band_rock_2_1247x690.webp',
     maxEdge: 1000
   },
   {
@@ -360,7 +360,7 @@ export const IMAGE_SLOTS = [
     group: 'Downloads',
     label: 'Press kit image',
     where: 'The file visitors get from "Download Technical Rider & EPK" in the Booking section',
-    fallback: '/band/band_rock_8_1254x1254.png',
+    fallback: '/band/band_rock_8_1254x1254.png', // stays a PNG: it is a download, not a page image
     maxEdge: 2400
   }
 ]

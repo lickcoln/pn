@@ -5,12 +5,26 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0a" />
+    <title>PARANOID NOISE | Punk Rock & 90s Grunge Trio (Jakarta)</title>
     <meta name="description" content="Paranoid Noise - Raw Punk Rock & 90s Seattle Grunge Trio from Jakarta, Indonesia. Arief (Guitar/Vocals), Ganjar (Bass), Kimao (Drum)." />
     <meta name="keywords" content="Paranoid Noise, Punk Rock, Grunge, Alternative Rock, Jakarta Underground, Indonesia Rock Band, Nirvana Seattle Sound" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="__SITE_URL__/" />
+
+    <!-- Link previews: __SITE_URL__ is filled in at build time (see vite.config.js) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Paranoid Noise" />
+    <meta property="og:url" content="__SITE_URL__/" />
     <meta property="og:title" content="PARANOID NOISE - Official Band Website" />
     <meta property="og:description" content="Raw Punk Rock & 90s Seattle Grunge Trio from Jakarta, Indonesia. Official singles, gig schedules, merch, and booking." />
-    <meta property="og:image" content="/logo.png" />
-    <title>PARANOID NOISE | Punk Rock & 90s Grunge Trio (Jakarta)</title>
+    <meta property="og:image" content="__SITE_URL__/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Paranoid Noise logo over a black and white live photo of the band" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PARANOID NOISE - Official Band Website" />
+    <meta name="twitter:description" content="Raw Punk Rock & 90s Seattle Grunge Trio from Jakarta, Indonesia. Official singles, gig schedules, merch, and booking." />
+    <meta name="twitter:image" content="__SITE_URL__/og-image.jpg" />
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +33,11 @@
   </head>
   <body class="bg-black text-white selection:bg-red-700 selection:text-white antialiased overflow-x-hidden font-sans">
     <div id="root"></div>
+    <noscript>
+      <p style="padding:2rem;font-family:sans-serif;text-align:center">
+        PARANOID NOISE: punk rock and 90's grunge trio from Jakarta, Indonesia. This website needs JavaScript, please turn it on to see the music, gigs and merch.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

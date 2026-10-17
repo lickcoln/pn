@@ -123,7 +123,9 @@ const PUBLISH_DELAY_MS = 700
 // Saved or published content may predate newer fields (fill the gaps from the defaults) or the
 // current default copy (swap items that were never edited, see contentMigration.js)
 function mergeConfig(saved) {
-  const content = migrateLegacyContent(saved, DEFAULT_CONFIG)
+  const migrated = migrateLegacyContent(saved, DEFAULT_CONFIG)
+  // anything that is not a plain object (null, a string, a list) is treated as "nothing saved"
+  const content = migrated && typeof migrated === 'object' && !Array.isArray(migrated) ? migrated : {}
   // sanitizeConfig makes sure a badly shaped value cannot break a component
   return sanitizeConfig({
     ...DEFAULT_CONFIG,
