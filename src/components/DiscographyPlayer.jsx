@@ -45,6 +45,10 @@ function formatTime(seconds) {
   return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 }
 
+// A cover that is the band logo (the default for a single without artwork) would lose its sides in a square
+// crop, so it is shown whole on a dark tile instead
+const isLogoCover = (url, logo) => url === logo || /(^|\/)logo\.(png|webp|jpe?g)(\?|$)/i.test(url || '')
+
 // A year range for the badge, read from the singles themselves so it never goes out of date
 function releaseYears(singles) {
   const years = singles
@@ -304,8 +308,8 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start mt-6">
 
-              {/* Right (first on phones): Now Playing Screen & Waveform Visualizer */}
-              <div className="md:col-span-7 md:order-2 flex flex-col gap-4">
+              {/* Right (first on phones): Now Playing Screen & Waveform Visualizer. Centered beside the tall slider column. */}
+              <div className="md:col-span-7 md:order-2 md:self-center flex flex-col gap-4">
 
                 <div className="p-4 rounded-xl bg-black border border-neutral-800">
                   <div className="flex items-center justify-between text-xs font-tech text-neutral-400 mb-2">
@@ -317,12 +321,12 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
+                    <div className="w-14 h-14 md:w-24 md:h-24 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
                       <img
                         src={currentTrack.coverArt}
                         alt={currentTrack.title}
                         decoding="async"
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full ${isLogoCover(currentTrack.coverArt, config.images.logo) ? 'object-contain p-1' : 'object-cover'}`}
                       />
                     </div>
                     <div className="min-w-0">
@@ -565,7 +569,11 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
                     alt={track.title}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-500"
+                    className={`w-full h-full group-hover:scale-105 transition-all duration-500 ${
+                      isLogoCover(track.coverArt, config.images.logo)
+                        ? 'object-contain p-3'
+                        : 'object-cover filter grayscale contrast-125 group-hover:grayscale-0'
+                    }`}
                   />
 
                   {/* Dark gradient */}
