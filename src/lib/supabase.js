@@ -112,16 +112,62 @@ export async function fetchSiteContent() {
   try {
     const { data, error } = await supabase
       .from('site_content')
-      .select('config')
+      .select('config, updated_at')
       .eq('id', CONTENT_ROW_ID)
       .maybeSingle()
 
     if (error) throw error
-    return { status: 'ready', config: data?.config ?? null }
+    return { status: 'ready', config: data?.config ?? null, updatedAt: data?.updated_at ?? null }
   } catch (err) {
     const missing = err?.code === 'PGRST205' || err?.code === '42P01'
     console.info('Shared site content unavailable, using local content:', err?.message || err)
     return { status: 'unavailable', reason: missing ? 'missing' : 'network', config: null }
+  }
+}
+
+/**
+ * Only the version (the publish time) of the published content, a few bytes instead of the whole config.
+ * Open pages use it to notice that the admin published something new. `exists` is false when nothing is published.
+ */
+export async function fetchSiteContentVersion() {
+  if (!isSupabaseConfigured || !supabase) return { ok: false }
+
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('updated_at')
+      .eq('id', CONTENT_ROW_ID)
+      .maybeSingle()
+
+    if (error) throw error
+    return { ok: true, exists: Boolean(data), updatedAt: data?.updated_at ?? null }
+  } catch {
+    return { ok: false }
+  }
+}
+
+/**
+ * Live updates (needs supabase-realtime.sql): Supabase pushes every change of the published content to the
+ * open page. `onChange(payload)` gets the change; `onStatus(status, error)` reports SUBSCRIBED when the live
+ * connection works and CHANNEL_ERROR / TIMED_OUT / CLOSED when it does not. Returns a function that closes it.
+ */
+export function subscribeToSiteContent({ onChange, onStatus }) {
+  if (!isSupabaseConfigured || !supabase) return () => {}
+
+  // A unique name per subscription, so closing one and opening the next never meets a half-closed channel
+  const channel = supabase
+    .channel(`site-content-${Math.random().toString(36).slice(2, 8)}`, {
+      // makes a table without live updates enabled report a clear reason instead of staying silent
+      config: { postgres_changes_options: { wait: true } }
+    })
+    // new and changed content (only the one row the site uses)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'site_content', filter: `id=eq.${CONTENT_ROW_ID}` }, onChange)
+    // a removed row (the admin's "Reset"): the server cannot filter deletions, and the table only has this one row
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'site_content' }, onChange)
+    .subscribe((status, error) => onStatus?.(status, error))
+
+  return () => {
+    supabase.removeChannel(channel)
   }
 }
 
@@ -145,13 +191,14 @@ async function runWrite(request) {
 
 /**
  * Publish the whole config. RLS only accepts this from an admin session.
+ * `updatedAt` is the version this save will have on the server (the caller can pass one it has already noted,
+ * so it can recognise this very save when the live update comes back); on success the result carries it.
  */
-export function saveSiteContent(config) {
-  return runWrite(() =>
-    supabase
-      .from('site_content')
-      .upsert({ id: CONTENT_ROW_ID, config, updated_at: new Date().toISOString() })
+export async function saveSiteContent(config, updatedAt = new Date().toISOString()) {
+  const result = await runWrite(() =>
+    supabase.from('site_content').upsert({ id: CONTENT_ROW_ID, config, updated_at: updatedAt })
   )
+  return result.success ? { ...result, updatedAt } : result
 }
 
 /**

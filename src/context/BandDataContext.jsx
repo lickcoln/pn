@@ -8,13 +8,16 @@ import {
   BAND_CONTACT,
   SITE_IMAGES
 } from '../data/bandData'
-import { CONTENT_VERSION, migrateLegacyContent } from '../lib/contentMigration'
+import { CONTENT_VERSION, migrateLegacyContent, stableStringify } from '../lib/contentMigration'
 import { sanitizeConfig } from '../lib/sanitizeConfig'
+import { startLiveContent, stampOf } from '../lib/liveContent'
 import {
   isSupabaseConfigured,
   supabase,
   isAdminUser,
   fetchSiteContent,
+  fetchSiteContentVersion,
+  subscribeToSiteContent,
   saveSiteContent,
   deleteSiteContent,
   adminSignIn,
@@ -119,6 +122,7 @@ const DEFAULT_CONFIG = {
 const LOCAL_KEY = 'pn_live_band_config'
 const CACHE_KEY = 'pn_site_content_cache'
 const PUBLISH_DELAY_MS = 700
+const ECHO_WAIT_MS = 6000
 
 // Saved or published content may predate newer fields (fill the gaps from the defaults) or the
 // current default copy (swap items that were never edited, see contentMigration.js)
@@ -164,6 +168,15 @@ function removeStored(key) {
   }
 }
 
+// The local-only admin login (used while the shared content is unreachable) leaves this flag, see AdminPortal
+function inLocalAdminSession() {
+  try {
+    return sessionStorage.getItem('pn_admin_session') === 'true'
+  } catch {
+    return false
+  }
+}
+
 const BandDataContext = createContext(null)
 
 export function BandDataProvider({ children }) {
@@ -177,10 +190,28 @@ export function BandDataProvider({ children }) {
   const [remoteReason, setRemoteReason] = useState('')
   const [adminUser, setAdminUser] = useState(null)
   const [syncState, setSyncState] = useState({ status: 'idle', error: '' })
+  // How other open pages get the admin's changes: 'off' | 'connecting' | 'live' (pushed within a second or two)
+  // | 'polling' (live updates are not set up, so pages check about every 30 seconds)
+  const [liveStatus, setLiveStatus] = useState('off')
+  // Did the admin's last save come back through the live connection? 'unknown' until it does or fails to within
+  // a few seconds. That proves (or disproves) that live updates really reach pages, see supabase-realtime.sql.
+  const [liveEcho, setLiveEcho] = useState('unknown')
 
   // Latest config, so edits made in the same tick build on each other, and the pending publish
   const configRef = useRef(config)
   const publishTimer = useRef(null)
+  // The published version (see stampOf) this page shows, or null when nothing is published
+  const versionRef = useRef(null)
+  // True from an admin edit until it is saved on the server. While it is true, content arriving from the server
+  // is ignored, otherwise a change made elsewhere could wipe an edit that has not been saved yet.
+  const dirtyRef = useRef(false)
+  const editCount = useRef(0)
+  // Bookkeeping for liveEcho: the version of the admin's latest save, the latest version the server pushed,
+  // the status as the live connection last reported it, and the timer that gives up waiting
+  const lastPublishStamp = useRef(null)
+  const echoSeen = useRef(null)
+  const liveStatusRef = useRef('off')
+  const echoTimer = useRef(0)
 
   // Apply theme accent color dynamically to CSS root variables
   useEffect(() => {
@@ -199,41 +230,123 @@ export function BandDataProvider({ children }) {
 
   // Shared content from Supabase wins over local copies once the site_content table exists
   useEffect(() => {
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured) return undefined
     let cancelled = false
+    let retryTimer = 0
+    let attempts = 0
 
-    fetchSiteContent().then(({ status, reason, config: remote }) => {
-      if (cancelled) return
-      setRemoteStatus(status)
-      setRemoteReason(reason || '')
-      if (status !== 'ready') return
+    const load = () => {
+      fetchSiteContent().then(({ status, reason, config: remote, updatedAt }) => {
+        if (cancelled) return
+        setRemoteStatus(status)
+        setRemoteReason(reason || '')
 
-      const next = remote ? mergeConfig(remote) : DEFAULT_CONFIG
-      configRef.current = next
-      setConfig(next)
-      if (remote) writeStored(CACHE_KEY, remote)
-      else removeStored(CACHE_KEY)
-    })
+        // The server could not be reached (a weak connection, a moment offline): keep trying quietly, so a
+        // visitor does not stay on stale content for the whole visit. An admin working in the local-only mode
+        // is left alone, because switching them to the server login in the middle of their work would confuse.
+        if (status === 'unavailable' && reason === 'network' && !inLocalAdminSession()) {
+          retryTimer = window.setTimeout(load, Math.min(60000, 8000 * 2 ** attempts))
+          attempts += 1
+          return
+        }
+        if (status !== 'ready') return
+
+        const next = remote ? mergeConfig(remote) : DEFAULT_CONFIG
+        configRef.current = next
+        versionRef.current = remote ? stampOf(updatedAt) : null
+        setConfig(next)
+        if (remote) writeStored(CACHE_KEY, remote)
+        else removeStored(CACHE_KEY)
+      })
+    }
+    load()
 
     return () => {
       cancelled = true
+      clearTimeout(retryTimer)
     }
   }, [])
+
+  // Live updates: while the shared content is active, whatever the admin publishes reaches this page by itself
+  useEffect(() => {
+    if (remoteStatus !== 'ready') return undefined
+
+    const applyRemote = (remote, updatedAt) => {
+      if (dirtyRef.current) return // unsaved edits of this admin win over what arrives
+      versionRef.current = remote ? stampOf(updatedAt) : null
+      if (remote) writeStored(CACHE_KEY, remote)
+      else removeStored(CACHE_KEY)
+
+      const next = remote ? mergeConfig(remote) : DEFAULT_CONFIG
+      if (stableStringify(next) === stableStringify(configRef.current)) return // nothing on screen would change
+      configRef.current = next
+      setConfig(next)
+    }
+
+    const stop = startLiveContent({
+      api: { fetchVersion: fetchSiteContentVersion, fetchContent: fetchSiteContent, subscribe: subscribeToSiteContent },
+      getVersion: () => versionRef.current,
+      onRemote: applyRemote,
+      onStatus: (status) => {
+        liveStatusRef.current = status
+        setLiveStatus(status)
+      },
+      onEvent: (stamp) => {
+        echoSeen.current = stamp
+        if (stamp !== null && stamp === lastPublishStamp.current) {
+          clearTimeout(echoTimer.current)
+          setLiveEcho('confirmed')
+        }
+      }
+    })
+    return () => {
+      stop()
+      clearTimeout(echoTimer.current)
+      liveStatusRef.current = 'off'
+      setLiveStatus('off')
+    }
+  }, [remoteStatus])
 
   // Track the Supabase admin session (it persists across reloads)
   useEffect(() => {
     if (!supabase) return
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAdminUser(isAdminUser(session?.user) ? session.user : null)
+      const admin = isAdminUser(session?.user)
+      setAdminUser(admin ? session.user : null)
+      // someone who is no longer the admin has no edits left to protect
+      if (!admin) dirtyRef.current = false
     })
     return () => data.subscription.unsubscribe()
   }, [])
 
+  // A save made while live updates are connected must come back through them within a few seconds
+  const expectEcho = (stamp) => {
+    clearTimeout(echoTimer.current)
+    if (echoSeen.current === stamp) {
+      setLiveEcho('confirmed')
+      return
+    }
+    if (liveStatusRef.current !== 'live') return
+    echoTimer.current = window.setTimeout(() => {
+      if (echoSeen.current !== stamp) setLiveEcho('missing')
+    }, ECHO_WAIT_MS)
+  }
+
   const publish = async (next) => {
+    const editsAtStart = editCount.current
+    // the version this save will have on the server, noted before the request so its echo can be recognised
+    const updatedAt = new Date().toISOString()
+    lastPublishStamp.current = stampOf(updatedAt)
+    setLiveEcho('unknown')
     setSyncState({ status: 'saving', error: '' })
-    const result = await saveSiteContent(next)
+    const result = await saveSiteContent(next, updatedAt)
     if (result.success) {
       writeStored(CACHE_KEY, next)
+      // this is the version the server now holds, so its live update coming back changes nothing
+      versionRef.current = stampOf(result.updatedAt)
+      expectEcho(versionRef.current)
+      // an edit made while this one was being saved is still waiting, and keeps its protection
+      if (editCount.current === editsAtStart) dirtyRef.current = false
       setSyncState({ status: 'saved', error: '' })
     } else {
       setSyncState({ status: 'error', error: result.error })
@@ -248,6 +361,8 @@ export function BandDataProvider({ children }) {
       return
     }
     if (!adminUser) return
+    dirtyRef.current = true
+    editCount.current += 1
     clearTimeout(publishTimer.current)
     publishTimer.current = setTimeout(() => publish(next), PUBLISH_DELAY_MS)
   }
@@ -320,6 +435,8 @@ export function BandDataProvider({ children }) {
       const result = await deleteSiteContent()
       if (result.success) {
         removeStored(CACHE_KEY)
+        versionRef.current = null
+        dirtyRef.current = false
         setSyncState({ status: 'saved', error: '' })
       } else {
         setSyncState({ status: 'error', error: result.error })
@@ -362,6 +479,8 @@ export function BandDataProvider({ children }) {
         getConfig: () => configRef.current,
         remoteStatus,
         remoteReason,
+        liveStatus,
+        liveEcho,
         adminUser,
         syncState,
         adminLogin: adminSignIn,

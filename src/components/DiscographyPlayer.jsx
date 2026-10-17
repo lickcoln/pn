@@ -111,7 +111,7 @@ function ParamSlider({ label, value, onChange, dimmed = false, flatAt50 = false 
 export default function DiscographyPlayer({ playRequest, distortionActive, onToggleDistortion }) {
   const { config } = useBandData()
   const singles = config.singles
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [playingFlag, setIsPlaying] = useState(false)
   const [currentId, setCurrentId] = useState(null)
   const [settings, setSettings] = useState(loadSettings)
   const [progress, setProgress] = useState({ current: 0, duration: 0 })
@@ -123,6 +123,14 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
   // Looked up on every render, so the console follows an edited single and never points at a deleted one
   const currentTrack = singles.find((single) => single.id === currentId) ?? singles[0] ?? null
   const hasTracks = currentTrack !== null
+
+  // The admin can remove a single while someone is listening to it (the page updates live): the music stops
+  // and the console shows the first single again
+  const currentGone = currentId !== null && !singles.some((single) => single.id === currentId)
+  const isPlaying = playingFlag && !currentGone
+  useEffect(() => {
+    if (currentGone) audioEngine.stop()
+  }, [currentGone])
   const isSong = Boolean(currentTrack?.audioUrl)
   const years = releaseYears(singles)
 

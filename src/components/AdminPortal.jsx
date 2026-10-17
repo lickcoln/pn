@@ -79,6 +79,8 @@ export default function AdminPortal() {
     getConfig,
     remoteStatus,
     remoteReason,
+    liveStatus,
+    liveEcho,
     adminUser,
     syncState,
     adminLogin,
@@ -423,34 +425,52 @@ export default function AdminPortal() {
 
               {/* Where edits go: shared with every visitor (Supabase) or this browser only */}
               {usesSupabaseLogin ? (
-                <div className={`border-b px-6 py-2 text-xs font-tech flex items-center justify-between gap-3 shrink-0 ${
+                <div className={`border-b px-6 py-2 text-xs font-tech shrink-0 ${
                   syncState.status === 'error'
                     ? 'bg-red-950/70 border-red-900 text-red-200'
                     : syncState.status === 'saved'
                       ? 'bg-green-950/50 border-green-900 text-green-300'
                       : 'bg-neutral-900 border-neutral-800 text-neutral-300'
                 }`}>
-                  <span className="flex items-center gap-2">
-                    {syncState.status === 'saving' ? (
-                      <LoaderCircle className="w-4 h-4 animate-spin" />
-                    ) : syncState.status === 'error' ? (
-                      <CloudOff className="w-4 h-4" />
-                    ) : (
-                      <Cloud className="w-4 h-4" />
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2">
+                      {syncState.status === 'saving' ? (
+                        <LoaderCircle className="w-4 h-4 animate-spin" />
+                      ) : syncState.status === 'error' ? (
+                        <CloudOff className="w-4 h-4" />
+                      ) : (
+                        <Cloud className="w-4 h-4" />
+                      )}
+                      {syncState.status === 'saving' && 'Saving to the server...'}
+                      {syncState.status === 'saved' && 'Saved to the server and live for every visitor.'}
+                      {syncState.status === 'error' && `Could not save to the server: ${syncState.error}`}
+                      {syncState.status === 'idle' && 'Connected to the server: changes are saved automatically and live for every visitor.'}
+                    </span>
+                    {syncState.status === 'error' && (
+                      <button
+                        onClick={retryPublish}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-bold uppercase shrink-0"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Try again
+                      </button>
                     )}
-                    {syncState.status === 'saving' && 'Saving to the server...'}
-                    {syncState.status === 'saved' && 'Saved to the server and live for every visitor.'}
-                    {syncState.status === 'error' && `Could not save to the server: ${syncState.error}`}
-                    {syncState.status === 'idle' && 'Connected to the server: changes are saved automatically and live for every visitor.'}
-                  </span>
-                  {syncState.status === 'error' && (
-                    <button
-                      onClick={retryPublish}
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-bold uppercase shrink-0"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      Try again
-                    </button>
+                  </div>
+                  {/* How fast the pages that are open right now catch up (see supabase-realtime.sql) */}
+                  {liveStatus === 'live' && liveEcho !== 'missing' && (
+                    <p className="mt-1 text-[11px] opacity-80">
+                      Instant updates are on{liveEcho === 'confirmed' ? ' (confirmed by your last save)' : ''}: visitors who have the site open see your changes within a second or two, without refreshing.
+                    </p>
+                  )}
+                  {liveStatus === 'live' && liveEcho === 'missing' && (
+                    <p className="mt-1 text-[11px] text-amber-300">
+                      Live updates are connected, but your last save did not come back through them, so visitors who have the site open may need a couple of minutes to see changes. Run supabase-realtime.sql once in the Supabase SQL Editor, then reload this page.
+                    </p>
+                  )}
+                  {liveStatus === 'polling' && (
+                    <p className="mt-1 text-[11px] text-amber-300">
+                      Instant updates are off, so visitors who have the site open catch up within about 30 seconds. To make it instant, run supabase-realtime.sql once in the Supabase SQL Editor.
+                    </p>
                   )}
                 </div>
               ) : (
