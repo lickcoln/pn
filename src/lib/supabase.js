@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { safeFileName } from './media'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+// Values pasted into the Vercel dashboard often carry a trailing newline or space. Ordinary requests shrug it off
+// (browsers trim header values), but it ends up inside the WebSocket address of the live connection, which then
+// fails with "transport failed". So both values are trimmed here.
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim()
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
