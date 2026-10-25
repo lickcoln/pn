@@ -11,7 +11,7 @@ function joinNames(names) {
 
 export default function BandProfile() {
   const { config, currentTheme } = useBandData()
-  const { bio, images, members } = config
+  const { bio, images, members, texts } = config
   const memberNames = members.map((member) => member.name).filter(Boolean)
 
   const sonicPillars = [
@@ -70,9 +70,11 @@ export default function BandProfile() {
               ABOUT <span style={{ color: currentTheme.primaryColor }}>PARANOID NOISE</span>
             </h2>
           </div>
-          <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
-            A punk rock &amp; 90’s grunge trio from Jakarta, setting the underground stage on fire with raw energy and merciless distortion.
-          </p>
+          {texts.aboutIntro && (
+            <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md text-pretty">
+              {texts.aboutIntro}
+            </p>
+          )}
         </div>
 
         {/* Grid: Story & Visuals */}

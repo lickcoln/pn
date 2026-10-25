@@ -240,9 +240,11 @@ export default function EventSchedule() {
               TOUR &amp; <span style={{ color: currentTheme.primaryColor }}>LIVE DATES</span>
             </h2>
           </div>
-          <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
-            Witness the explosive stage energy of Paranoid Noise live from the front row of the moshpit. Get your tickets or reserve now!
-          </p>
+          {config.texts.gigsIntro && (
+            <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md text-pretty">
+              {config.texts.gigsIntro}
+            </p>
+          )}
         </div>
 
         {/* Upcoming shows, soonest first */}

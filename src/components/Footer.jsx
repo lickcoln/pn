@@ -9,7 +9,7 @@ const THIS_YEAR = new Date().getFullYear()
 
 export default function Footer() {
   const { config, currentTheme } = useBandData()
-  const { contact, members, hero } = config
+  const { contact, members, texts } = config
   const channels = socialChannels(contact)
 
   const scrollToTop = () => {
@@ -37,17 +37,21 @@ export default function Footer() {
               </div>
               <div>
                 <span className="font-bebas text-3xl tracking-wider text-white block leading-none">
-                  {hero.title}
+                  {texts.siteName}
                 </span>
-                <span className="text-[10px] font-tech text-neutral-400 tracking-widest uppercase">
-                  PUNK ROCK &bull; SEATTLE SOUND GRUNGE TRIO
-                </span>
+                {texts.footerGenre && (
+                  <span className="text-[10px] font-tech text-neutral-400 tracking-widest uppercase">
+                    {texts.footerGenre}
+                  </span>
+                )}
               </div>
             </div>
 
-            <p className="text-xs font-tech text-neutral-400 leading-relaxed max-w-sm">
-              Rooted in the gritty distortion-heavy guitar riffs of Nirvana and the 90's Seattle sound, blended with the raw energy of the Indonesian underground scene.
-            </p>
+            {texts.footerAbout && (
+              <p className="text-xs font-tech text-neutral-400 leading-relaxed max-w-sm">
+                {texts.footerAbout}
+              </p>
+            )}
 
             <div className="text-xs font-tech text-neutral-500">
               <span className="text-neutral-300 font-bold">Lineup:</span>{' '}
@@ -127,7 +131,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-tech text-neutral-500">
           <div>
-            &copy; {THIS_YEAR} PARANOID NOISE. All Rights Reserved. Built for the Indonesian Underground.
+            &copy; {THIS_YEAR} {texts.siteName}. All Rights Reserved. Built for the Indonesian Underground.
           </div>
 
           <div className="flex items-center gap-3">

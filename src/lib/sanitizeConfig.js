@@ -50,6 +50,8 @@ export function sanitizeConfig(config, defaults, themePresetIds) {
     },
     hero: Object.fromEntries(Object.keys(defaults.hero).map((key) => [key, text(record(config.hero)[key], defaults.hero[key])])),
     bio: text(config.bio, defaults.bio),
+    // a saved empty text stays empty (that is how a line is hidden); a missing or damaged one falls back
+    texts: Object.fromEntries(Object.keys(defaults.texts).map((key) => [key, text(record(config.texts)[key], defaults.texts[key])])),
     contact,
     images: Object.fromEntries(Object.keys(defaults.images).map((key) => [key, text(record(config.images)[key]) || defaults.images[key]])),
     members: list(config.members, defaults.members, 'member', (m) => ({

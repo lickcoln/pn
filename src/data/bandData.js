@@ -287,6 +287,22 @@ export const BAND_CONTACT = {
   soundcloudHandle: 'Paranoid Noise'
 }
 
+// The sentences around the content that visitors read (top bar, footer, the introduction under each section
+// title). Editable in the admin portal's "Site Texts" tab; an empty text hides that line.
+// `{count}` in musicIntro becomes "7 singles" (or "1 single") from the real list.
+export const SITE_TEXTS = {
+  siteName: 'PARANOID NOISE',
+  navTagline: "JAKARTA PUNK ROCK • 90'S GRUNGE",
+  footerGenre: 'PUNK ROCK • SEATTLE SOUND GRUNGE TRIO',
+  footerAbout: "Rooted in the gritty distortion-heavy guitar riffs of Nirvana and the 90's Seattle sound, blended with the raw energy of the Indonesian underground scene.",
+  aboutIntro: 'A punk rock & 90’s grunge trio from Jakarta, setting the underground stage on fire with raw energy and merciless distortion.',
+  lineupIntro: 'The three pillars behind the sonic chaos and explosive stage energy of Paranoid Noise.',
+  musicIntro: '{count} by Paranoid Noise that reflect the anger, restlessness, and Seattle-sound energy of the underground scene.',
+  gigsIntro: 'Witness the explosive stage energy of Paranoid Noise live from the front row of the moshpit. Get your tickets or reserve now!',
+  merchIntro: 'Support the independent musicianship of Paranoid Noise. Official merchandise with premium quality, grunge discharge prints, and authentic details.',
+  bookingIntro: 'For stage bookings, media interviews, collaborations, and music festival curation.'
+}
+
 // Every site-wide image the admin portal can replace, with the defaults shipped in /public.
 // Photos that belong to a list item live on the item itself: a member's image, a single's coverArt,
 // a merch product's image.

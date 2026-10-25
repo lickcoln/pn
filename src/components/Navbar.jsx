@@ -8,6 +8,7 @@ import { useBandData } from '../context/BandDataContext'
 export default function Navbar({ cartCount, onOpenCart, distortionActive, onToggleDistortion }) {
   const { config } = useBandData()
   const channels = socialChannels(config.contact)
+  const { texts } = config
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -65,11 +66,13 @@ export default function Navbar({ cartCount, onOpenCart, distortionActive, onTogg
 
             <div className="flex flex-col text-left">
               <span className="font-bebas text-2xl sm:text-3xl tracking-wider text-white group-hover:text-red-500 transition-colors leading-none">
-                PARANOID NOISE
+                {texts.siteName}
               </span>
-              <span className="text-[10px] tracking-widest text-neutral-400 uppercase font-tech">
-                JAKARTA PUNK ROCK &bull; 90'S GRUNGE
-              </span>
+              {texts.navTagline && (
+                <span className="text-[10px] tracking-widest text-neutral-400 uppercase font-tech">
+                  {texts.navTagline}
+                </span>
+              )}
             </div>
           </a>
 

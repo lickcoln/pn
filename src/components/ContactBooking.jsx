@@ -111,9 +111,11 @@ export default function ContactBooking() {
           <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
             CONTACT <span className="text-red-600">PARANOID NOISE</span>
           </h2>
-          <p className="font-tech text-sm text-neutral-400 mt-2">
-            For stage bookings, media interviews, collaborations, and music festival curation.
-          </p>
+          {config.texts.bookingIntro && (
+            <p className="font-tech text-sm text-neutral-400 mt-2 text-balance">
+              {config.texts.bookingIntro}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">

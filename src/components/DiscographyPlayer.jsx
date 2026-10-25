@@ -133,6 +133,8 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
   }, [currentGone])
   const isSong = Boolean(currentTrack?.audioUrl)
   const years = releaseYears(singles)
+  // "{count}" in the admin-written sentence becomes "7 singles" (or "1 single") from the real list
+  const musicIntro = config.texts.musicIntro.replaceAll('{count}', `${singles.length} ${singles.length === 1 ? 'single' : 'singles'}`).trim()
 
   // Slider settings are remembered between visits and always pushed to the audio engine
   useEffect(() => {
@@ -297,11 +299,11 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
           <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
             SINGLES &amp; <span className="text-red-600">STOMPBOX PLAYER</span>
           </h2>
-          <p className="font-tech text-sm text-neutral-400 mt-2">
-            {singles.length === 0
-              ? 'New music is on the way.'
-              : `${singles.length} ${singles.length === 1 ? 'single' : 'singles'} by Paranoid Noise that reflect the anger, restlessness, and Seattle-sound energy of the underground scene.`}
-          </p>
+          {(singles.length === 0 || musicIntro) && (
+            <p className="font-tech text-sm text-neutral-400 mt-2 text-balance">
+              {singles.length === 0 ? 'New music is on the way.' : musicIntro}
+            </p>
+          )}
         </div>
 
         {/* Interactive Stompbox Simulator & Real-time Player Console */}

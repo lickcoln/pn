@@ -17,6 +17,7 @@ import {
   CheckCircle,
   AlertTriangle,
   Sliders,
+  Type,
   Inbox,
   Cloud,
   CloudOff,
@@ -31,6 +32,7 @@ import { useModal } from '../lib/useModal'
 import ThemeTab from './admin/ThemeTab'
 import ImagesTab from './admin/ImagesTab'
 import BioTab from './admin/BioTab'
+import TextsTab from './admin/TextsTab'
 import MembersTab from './admin/MembersTab'
 import GigsTab from './admin/GigsTab'
 import InboxTab from './admin/InboxTab'
@@ -43,6 +45,7 @@ const TABS = [
   ['theme', 'Theme & Look', Palette],
   ['images', 'Images & Backgrounds', Images],
   ['bio', 'Profile & Band Bio', FileText],
+  ['texts', 'Site Texts', Type],
   ['members', 'Band Members', Users],
   ['gigs', 'Gigs & Tour Schedule', Calendar],
   ['rsvps', 'Ticket RSVPs', CheckCircle],
@@ -68,6 +71,7 @@ export default function AdminPortal() {
     updateTheme,
     updateHero,
     updateBio,
+    updateTexts,
     updateMembers,
     updateSingles,
     updateGigs,
@@ -531,6 +535,10 @@ export default function AdminPortal() {
 
                   <div hidden={activeTab !== 'bio'}>
                     <BioTab key={config.bio} bio={config.bio} onSave={saver(updateBio)} />
+                  </div>
+
+                  <div hidden={activeTab !== 'texts'}>
+                    <TextsTab key={versionOf(config.texts)} texts={config.texts} onSave={saver(updateTexts)} />
                   </div>
 
                   <div hidden={activeTab !== 'members'}>

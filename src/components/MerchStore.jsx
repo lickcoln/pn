@@ -64,9 +64,11 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
               PARANOID <span style={{ color: currentTheme.primaryColor }}>NOISE GEAR</span>
             </h2>
           </div>
-          <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md">
-            Support the independent musicianship of Paranoid Noise. Official merchandise with premium quality, grunge discharge prints, and authentic details.
-          </p>
+          {config.texts.merchIntro && (
+            <p className="mt-4 md:mt-0 font-tech text-sm text-neutral-400 max-w-md text-pretty">
+              {config.texts.merchIntro}
+            </p>
+          )}
         </div>
 
         {/* Merch Products Grid */}

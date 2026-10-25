@@ -6,7 +6,8 @@ import {
   TOUR_EVENTS,
   MERCH_ITEMS,
   BAND_CONTACT,
-  SITE_IMAGES
+  SITE_IMAGES,
+  SITE_TEXTS
 } from '../data/bandData'
 import { CONTENT_VERSION, migrateLegacyContent, stableStringify } from '../lib/contentMigration'
 import { sanitizeConfig } from '../lib/sanitizeConfig'
@@ -106,6 +107,7 @@ const DEFAULT_CONFIG = {
     sceneBadge: 'JAKARTA UNDERGROUND • EST. 2021'
   },
   bio: BAND_BIO,
+  texts: SITE_TEXTS,
   members: BAND_MEMBERS,
   singles: SINGLES_DISCOGRAPHY,
   gigs: TOUR_EVENTS,
@@ -136,6 +138,7 @@ function mergeConfig(saved) {
     ...content,
     theme: { ...DEFAULT_CONFIG.theme, ...(content.theme || {}) },
     hero: { ...DEFAULT_CONFIG.hero, ...(content.hero || {}) },
+    texts: { ...DEFAULT_CONFIG.texts, ...(content.texts && typeof content.texts === 'object' ? content.texts : {}) },
     contact: { ...DEFAULT_CONFIG.contact, ...(content.contact || {}) },
     images: { ...DEFAULT_CONFIG.images, ...(content.images || {}) },
     contentVersion: CONTENT_VERSION
@@ -392,6 +395,11 @@ export function BandDataProvider({ children }) {
     commit(prev => ({ ...prev, bio: newBio }))
   }
 
+  // The sentences around the content: top bar, footer and the introduction of each section
+  const updateTexts = (textUpdates) => {
+    commit(prev => ({ ...prev, texts: { ...prev.texts, ...textUpdates } }))
+  }
+
   const updateMembers = (newMembers) => {
     commit(prev => ({ ...prev, members: newMembers }))
   }
@@ -468,6 +476,7 @@ export function BandDataProvider({ children }) {
         updateTheme,
         updateHero,
         updateBio,
+        updateTexts,
         updateMembers,
         updateSingles,
         updateGigs,

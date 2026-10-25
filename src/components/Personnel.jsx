@@ -53,9 +53,11 @@ export default function Personnel() {
           <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
             THE <span style={{ color: currentTheme.primaryColor }}>PUNK ROCK TRIO</span>
           </h2>
-          <p className="font-tech text-sm text-neutral-400 mt-2">
-            The three pillars behind the sonic chaos and explosive stage energy of Paranoid Noise.
-          </p>
+          {config.texts.lineupIntro && (
+            <p className="font-tech text-sm text-neutral-400 mt-2 text-balance">
+              {config.texts.lineupIntro}
+            </p>
+          )}
         </div>
 
         {/* Full Band Lineup Portrait Banner */}
