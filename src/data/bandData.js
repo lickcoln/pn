@@ -369,7 +369,7 @@ export const IMAGE_SLOTS = [
     key: 'profileTileRight',
     group: 'Photos',
     label: 'Profile tile (right)',
-    where: 'The "Mapex Drums & Seattle Riffs" tile in the About section',
+    where: 'The "Mapex Drum & Sabian Cymbals" tile in the About section',
     fallback: '/band/band_rock_2_1247x690.webp',
     maxEdge: 1000
   },

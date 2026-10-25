@@ -78,17 +78,21 @@ export default function BandProfile() {
         </div>
 
         {/* Grid: Story & Visuals */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-10 sm:mb-16">
-          
+        {/* On a wide screen the two columns are exactly as tall as each other: the bio card on the left, the live
+            photo and the two gear tiles on the right (the tiles take whatever height the bio leaves, so the top
+            and bottom edges line up whatever the length of the bio). The photo keeps a landscape shape so a
+            picture of the whole trio is not cropped to a narrow strip. */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-x-12 items-stretch mb-6">
+
           {/* Left Column: Official Band Bio */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="lg:col-span-7 space-y-6"
+            className="lg:col-span-7 flex flex-col"
           >
-            <div className="relative p-5 sm:p-8 rounded-2xl bg-neutral-950/80 border border-neutral-800/80 shadow-2xl backdrop-blur-sm">
+            <div className="relative flex flex-col p-5 sm:p-8 rounded-2xl bg-neutral-950/80 border border-neutral-800/80 shadow-2xl backdrop-blur-sm lg:flex-1">
               <div className="absolute top-4 right-4 text-neutral-800 font-bebas text-6xl select-none">
                 #PN
               </div>
@@ -110,43 +114,10 @@ export default function BandProfile() {
               </p>
 
               <div
-                className="font-grunge text-3xl text-right mt-1"
+                className="font-grunge text-3xl text-right mt-auto pt-1"
                 style={{ color: currentTheme.primaryColor }}
               >
                 &rdquo;
-              </div>
-
-              {/* Footnote Badge */}
-              <div className="mt-6 pt-4 border-t border-neutral-900 flex flex-wrap items-center justify-between text-xs font-tech text-neutral-400">
-                <span
-                  className="font-bold uppercase"
-                  style={{ color: currentTheme.primaryColor }}
-                >
-                  &bull; JAKARTA INDONESIA UNDERGROUND
-                </span>
-                <span>ORIGIN: BEKASI - JAKARTA - BANDUNG</span>
-              </div>
-            </div>
-
-            {/* Stage Montage Banner */}
-            <div className="relative rounded-xl overflow-hidden border border-neutral-800 group">
-              <img
-                src={images.profileBanner}
-                alt="Paranoid Noise Gig Montage"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-40 sm:h-48 object-cover filter grayscale contrast-125 brightness-75 group-hover:scale-105 group-hover:brightness-90 transition-all duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex items-end p-4">
-                <div className="text-xs font-tech font-semibold text-neutral-200">
-                  <span
-                    className="font-bold uppercase"
-                    style={{ color: currentTheme.primaryColor }}
-                  >
-                    LIVE CIRCUITS:
-                  </span>{' '}
-                  Hard Rock Cafe, Authenticity Stage, Underground Clubs across Java
-                </div>
               </div>
             </div>
           </motion.div>
@@ -157,16 +128,16 @@ export default function BandProfile() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="lg:col-span-5 space-y-6"
+            className="lg:col-span-5 flex flex-col gap-6"
           >
-            {/* Live Trio Stage Photo */}
-            <div className="relative rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl group">
+            {/* Live Trio Stage Photo (the picture is laid over the box so it never decides the height itself) */}
+            <div className="relative rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl group aspect-[5/4] lg:aspect-[4/3] shrink-0">
               <img
                 src={images.profilePortrait}
                 alt="Paranoid Noise Live on Stage"
                 loading="lazy"
                 decoding="async"
-                className="w-full aspect-[5/4] sm:aspect-auto h-auto object-cover filter grayscale contrast-125 group-hover:contrast-100 transition-all duration-500"
+                className="absolute inset-0 w-full h-full object-cover filter grayscale contrast-125 group-hover:contrast-100 transition-all duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-4 sm:p-6">
                 <span
@@ -183,9 +154,10 @@ export default function BandProfile() {
               </div>
             </div>
 
-            {/* Gear & Noise Identity */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-28 sm:h-36">
+            {/* Gear & Noise Identity: side by side on a phone and from xl up, stacked in the narrower lg column;
+                from lg up the tiles share out the height that is left under the photo */}
+            <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 lg:grid-rows-2 xl:grid-rows-1 gap-3 sm:gap-4 lg:flex-1 lg:min-h-[12rem]">
+              <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-32 sm:h-40 lg:h-auto">
                 <img
                   src={images.profileTileLeft}
                   alt="Marshall Amplifiers Gear"
@@ -198,7 +170,7 @@ export default function BandProfile() {
                 </div>
               </div>
 
-              <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-28 sm:h-36">
+              <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-32 sm:h-40 lg:h-auto">
                 <img
                   src={images.profileTileRight}
                   alt="Rehearsal Jam Room"
@@ -207,13 +179,35 @@ export default function BandProfile() {
                   className="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-3 text-center">
-                  <span className="font-bebas text-lg text-white tracking-wider">MAPEX DRUMS &amp; SEATTLE RIFFS</span>
+                  <span className="font-bebas text-lg text-white tracking-wider">MAPEX DRUM &amp; SABIAN CYMBALS</span>
                 </div>
               </div>
             </div>
 
           </motion.div>
 
+        </div>
+
+        {/* Stage Montage Banner: one wide strip under both columns */}
+        <div className="relative rounded-xl overflow-hidden border border-neutral-800 group h-36 sm:h-44 lg:h-52 mb-10 sm:mb-16">
+          <img
+            src={images.profileBanner}
+            alt="Paranoid Noise Gig Montage"
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover filter grayscale contrast-125 brightness-75 group-hover:scale-105 group-hover:brightness-90 transition-all duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex items-end p-4">
+            <div className="text-xs font-tech font-semibold text-neutral-200">
+              <span
+                className="font-bold uppercase"
+                style={{ color: currentTheme.primaryColor }}
+              >
+                LIVE CIRCUITS:
+              </span>{' '}
+              Hard Rock Cafe, Authenticity Stage, Underground Clubs across Java
+            </div>
+          </div>
         </div>
 
         {/* 4 Sonic Pillars Cards */}
