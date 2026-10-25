@@ -15,6 +15,12 @@ const GROUPS = [
     ]
   },
   {
+    title: 'Home page',
+    fields: [
+      ['tickerText', 'Scrolling tape', 'textarea', 'The words that scroll across the two strips of tape at the bottom of the home page. Separate them with a bullet (•) or put each on its own line. Leave empty to remove the animation.']
+    ]
+  },
+  {
     title: 'Section introductions',
     fields: [
       ['aboutIntro', 'About section', 'textarea', 'Under the "About Paranoid Noise" title. Leave empty to hide it.'],

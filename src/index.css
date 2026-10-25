@@ -87,6 +87,52 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
+/* Punk banner on the home page (components/PunkBanner.jsx): tape strips that scroll in opposite directions,
+   a moving checkerboard and doodles that bounce. Only transforms move, so it stays cheap on a phone. */
+@keyframes pn-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes pn-marquee-back {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes pn-pogo {
+  0%, 100% { transform: translateY(0) scale(1.12, 0.88); }
+  12% { transform: translateY(-6px) scale(0.96, 1.06); }
+  45% { transform: translateY(-34px) scale(0.92, 1.1) rotate(-6deg); }
+  78% { transform: translateY(-4px) scale(0.98, 1.04) rotate(4deg); }
+}
+
+@keyframes pn-wiggle {
+  0%, 100% { transform: rotate(-12deg) scale(1); }
+  50% { transform: rotate(12deg) scale(1.12); }
+}
+
+@keyframes pn-checker {
+  to { background-position: 56px 0; }
+}
+
+@keyframes pn-flicker {
+  0%, 100% { opacity: 1; }
+  8% { opacity: 0.25; }
+  12% { opacity: 1; }
+  46% { opacity: 1; }
+  50% { opacity: 0.3; }
+  54% { opacity: 1; }
+}
+
+.pn-marquee { animation: pn-marquee var(--pn-speed, 32s) linear infinite; }
+.pn-marquee-back { animation: pn-marquee-back var(--pn-speed, 32s) linear infinite; }
+.pn-pogo { animation: pn-pogo 0.9s ease-in-out infinite; transform-origin: 50% 100%; }
+.pn-wiggle { animation: pn-wiggle 1.1s ease-in-out infinite; }
+.pn-checker { animation: pn-checker 1.6s linear infinite; }
+.pn-flicker { animation: pn-flicker 2.4s linear infinite; }
+/* the banner stops moving while it is off screen, so a phone is not animating what nobody sees */
+.pn-paused, .pn-paused * { animation-play-state: paused !important; }
+
 /* Anchor jumps stop below the fixed top bar */
 html {
   scroll-padding-top: 4.5rem;

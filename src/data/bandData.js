@@ -300,7 +300,9 @@ export const SITE_TEXTS = {
   musicIntro: '{count} by Paranoid Noise that reflect the anger, restlessness, and Seattle-sound energy of the underground scene.',
   gigsIntro: 'Witness the explosive stage energy of Paranoid Noise live from the front row of the moshpit. Get your tickets or reserve now!',
   merchIntro: 'Support the independent musicianship of Paranoid Noise. Official merchandise with premium quality, grunge discharge prints, and authentic details.',
-  bookingIntro: 'For stage bookings, media interviews, collaborations, and music festival curation.'
+  bookingIntro: 'For stage bookings, media interviews, collaborations, and music festival curation.',
+  // the words on the scrolling tape at the bottom of the home page, separated by a bullet (empty = no banner)
+  tickerText: 'TURN IT UP • FAST • LOUD • UNAPOLOGETIC • NO RULES • PUNK ROCK • JAKARTA UNDERGROUND'
 }
 
 // Every site-wide image the admin portal can replace, with the defaults shipped in /public.

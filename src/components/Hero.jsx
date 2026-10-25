@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Play, Calendar, Zap, MessageSquare, Volume2 } from 'lucide-react'
+import PunkBanner from './PunkBanner'
 import { audioEngine } from '../utils/audioSynth'
 import { useBandData } from '../context/BandDataContext'
 
@@ -28,8 +29,6 @@ export default function Hero({ onPlayFeaturedTrack }) {
     }, STOMP_RIFF_MS)
   }
 
-  const singlesCount = config.singles.length
-
   const glitchClass = config.theme.glitchIntensity === 'extreme'
     ? 'animate-pulse scale-102'
     : config.theme.glitchIntensity === 'off'
@@ -37,7 +36,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
     : 'animate-glitch'
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
+    <section id="hero" className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-4 overflow-hidden">
       
       {/* Background Live Concert Photo with Vignette and Gradient */}
       <div className="absolute inset-0 z-0">
@@ -214,40 +213,10 @@ export default function Hero({ onPlayFeaturedTrack }) {
           </a>
         </motion.div>
 
-        {/* Live Underground Stats & Ticker */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl text-left"
-        >
-          <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl tracking-wider" style={{ color: currentTheme.primaryColor }}>
-              {singlesCount} {singlesCount === 1 ? 'SINGLE' : 'SINGLES'}
-            </div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">Officially Released</div>
-          </div>
-          <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl text-white tracking-wider">
-              {members.length === 3 ? 'TRIO POWER' : `${members.length} ${members.length === 1 ? 'MEMBER' : 'MEMBERS'}`}
-            </div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">
-              {members.map(m => m.name).join(', ')}
-            </div>
-          </div>
-          <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl tracking-wider" style={{ color: currentTheme.primaryColor }}>
-              90'S ROOTS
-            </div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">Seattle Sound &amp; Grunge</div>
-          </div>
-          <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-xl p-3.5 backdrop-blur-sm">
-            <div className="font-bebas text-3xl text-white tracking-wider">DIY SCENE</div>
-            <div className="text-xs font-tech text-neutral-400 uppercase">Jakarta Underground</div>
-          </div>
-        </motion.div>
-
       </div>
+
+      {/* Punk banner: tape strips, a skate checkerboard and doodles that move on the beat */}
+      <PunkBanner />
 
       {/* Bottom Wave Divider */}
       <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none" />
