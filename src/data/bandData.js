@@ -302,7 +302,7 @@ export const SITE_TEXTS = {
   merchIntro: 'Support the independent musicianship of Paranoid Noise. Official merchandise with premium quality, grunge discharge prints, and authentic details.',
   bookingIntro: 'For stage bookings, media interviews, collaborations, and music festival curation.',
   // the words on the scrolling tape at the bottom of the home page, separated by a bullet (empty = no banner)
-  tickerText: 'TURN IT UP • FAST • LOUD • UNAPOLOGETIC • NO RULES • PUNK ROCK • JAKARTA UNDERGROUND'
+  tickerText: "90'S ROUGH DISTORTION • TURN IT UP • FAST • LOUD • UNAPOLOGETIC • NO RULES • PUNK ROCK • JAKARTA UNDERGROUND"
 }
 
 // Every site-wide image the admin portal can replace, with the defaults shipped in /public.
