@@ -133,8 +133,13 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
   }, [currentGone])
   const isSong = Boolean(currentTrack?.audioUrl)
   const years = releaseYears(singles)
-  // "{count}" in the admin-written sentence becomes "7 singles" (or "1 single") from the real list
+  // The heading texts are written in the admin: "{count}" becomes "7 singles" (or "1 single") and "{years}"
+  // becomes "(2021 - 2022)", both from the real list; an empty text hides its line
+  const { musicTitle, musicTitleAccent } = config.texts
   const musicIntro = config.texts.musicIntro.replaceAll('{count}', `${singles.length} ${singles.length === 1 ? 'single' : 'singles'}`).trim()
+  const musicBadge = config.texts.musicBadge.replaceAll('{years}', years ? `(${years})` : '').replace(/\s+/g, ' ').trim()
+  const titleWhite = musicTitle.trim()
+  const titleRed = musicTitleAccent.trim()
 
   // Slider settings are remembered between visits and always pushed to the audio engine
   useEffect(() => {
@@ -293,12 +298,16 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-950/40 border border-red-800/40 text-red-400 font-tech text-xs uppercase font-bold tracking-widest mb-3">
-            <Disc className="w-3.5 h-3.5 text-red-500 animate-spin" /> OFFICIAL DISCOGRAPHY{years ? ` (${years})` : ''}
-          </div>
-          <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
-            SINGLES &amp; <span className="text-red-600">STOMPBOX PLAYER</span>
-          </h2>
+          {musicBadge && (
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-950/40 border border-red-800/40 text-red-400 font-tech text-xs uppercase font-bold tracking-widest mb-3">
+              <Disc className="w-3.5 h-3.5 text-red-500 animate-spin shrink-0" /> {musicBadge}
+            </div>
+          )}
+          {(titleWhite || titleRed) && (
+            <h2 className="font-bebas text-5xl sm:text-7xl tracking-wider text-white">
+              {titleWhite}{titleWhite && titleRed ? ' ' : ''}<span className="text-red-600">{titleRed}</span>
+            </h2>
+          )}
           {(singles.length === 0 || musicIntro) && (
             <p className="font-tech text-sm text-neutral-400 mt-2 text-balance">
               {singles.length === 0 ? 'New music is on the way.' : musicIntro}

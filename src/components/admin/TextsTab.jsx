@@ -21,11 +21,19 @@ const GROUPS = [
     ]
   },
   {
+    title: 'Music section heading',
+    fields: [
+      ['musicBadge', 'Small label above the title', 'input', 'The red pill above the title. Write {years} where the release years should appear: it becomes "(2021 - 2022)" from the dates of your singles, and nothing when none has a date. Leave empty to hide the label.'],
+      ['musicTitle', 'Title, white part', 'input', 'The first part of the big title, in white. It can be left empty when the whole title is in the red part.'],
+      ['musicTitleAccent', 'Title, red part', 'input', 'The second part of the big title, in red, written right after the white part. Leave both parts empty to hide the title.'],
+      ['musicIntro', 'Sentence under the title', 'textarea', 'Write {count} where the number of singles should appear: it becomes "7 singles" (or "1 single") by itself. Leave empty to hide it.']
+    ]
+  },
+  {
     title: 'Section introductions',
     fields: [
       ['aboutIntro', 'About section', 'textarea', 'Under the "About Paranoid Noise" title. Leave empty to hide it.'],
       ['lineupIntro', 'Lineup section', 'textarea', 'Under the "The Punk Rock Trio" title. Leave empty to hide it.'],
-      ['musicIntro', 'Music section', 'textarea', 'Under the "Singles & Stompbox Player" title. Write {count} where the number of singles should appear: it becomes "7 singles" (or "1 single") by itself. Leave empty to hide it.'],
       ['gigsIntro', 'Gigs section', 'textarea', 'Under the "Tour & Live Dates" title. Leave empty to hide it.'],
       ['merchIntro', 'Merchandise section', 'textarea', 'Under the "Paranoid Noise Gear" title. Leave empty to hide it.'],
       ['bookingIntro', 'Contact & booking section', 'textarea', 'Under the "Contact Paranoid Noise" title. Leave empty to hide it.']
@@ -47,7 +55,7 @@ export default function TextsTab({ texts, onSave }) {
     >
       <TabHeader
         title="EDIT SITE TEXTS"
-        text="The sentences around the content: the top bar, the footer and the introduction under each section title. The band bio, the singles, gigs and products have their own tabs."
+        text="The sentences around the content: the top bar, the footer, the heading of the Music section and the introduction under each section title. The band bio, the singles, gigs and products have their own tabs."
       />
 
       {GROUPS.map((group) => (

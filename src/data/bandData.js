@@ -289,7 +289,8 @@ export const BAND_CONTACT = {
 
 // The sentences around the content that visitors read (top bar, footer, the introduction under each section
 // title). Editable in the admin portal's "Site Texts" tab; an empty text hides that line.
-// `{count}` in musicIntro becomes "7 singles" (or "1 single") from the real list.
+// `{count}` in musicIntro becomes "7 singles" (or "1 single") from the real list, and `{years}` in musicBadge
+// becomes the release years of those singles, like "(2021 - 2022)" (nothing when no single has a date).
 export const SITE_TEXTS = {
   siteName: 'PARANOID NOISE',
   navTagline: "JAKARTA PUNK ROCK • 90'S GRUNGE",
@@ -297,6 +298,9 @@ export const SITE_TEXTS = {
   footerAbout: "Rooted in the gritty distortion-heavy guitar riffs of Nirvana and the 90's Seattle sound, blended with the raw energy of the Indonesian underground scene.",
   aboutIntro: 'A punk rock & 90’s grunge trio from Jakarta, setting the underground stage on fire with raw energy and merciless distortion.',
   lineupIntro: 'The three pillars behind the sonic chaos and explosive stage energy of Paranoid Noise.',
+  musicBadge: 'OFFICIAL DISCOGRAPHY {years}',
+  musicTitle: 'SINGLES &', // the white part of the title
+  musicTitleAccent: 'STOMPBOX PLAYER', // the red part of the title
   musicIntro: '{count} by Paranoid Noise that reflect the anger, restlessness, and Seattle-sound energy of the underground scene.',
   gigsIntro: 'Witness the explosive stage energy of Paranoid Noise live from the front row of the moshpit. Get your tickets or reserve now!',
   merchIntro: 'Support the independent musicianship of Paranoid Noise. Official merchandise with premium quality, grunge discharge prints, and authentic details.',
