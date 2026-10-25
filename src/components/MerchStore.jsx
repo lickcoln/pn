@@ -1,17 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingBag, Check, Plus, Minus, Trash2, Send, X } from 'lucide-react'
+import { ShoppingBag, Check, Plus, Minus, Trash2, Send, X, ZoomIn } from 'lucide-react'
 import { whatsappLink } from '../lib/contactInfo'
 import { formatIdr, isSoldOutLabel } from '../lib/format'
 import { useModal } from '../lib/useModal'
 import { useBandData } from '../context/BandDataContext'
+import ImageZoom from './ImageZoom'
 
 export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, onRemoveFromCart, isCartOpen, onCloseCart }) {
   const { config, currentTheme } = useBandData()
   const merchItems = config.merch
   const [selectedSizes, setSelectedSizes] = useState({})
   const [addedItemNotice, setAddedItemNotice] = useState(null)
+  const [zoomId, setZoomId] = useState(null)
   const noticeTimer = useRef(null)
+
+  // looked up on every render, so a product the admin edits or removes while its picture is open never lingers
+  const zoomItem = merchItems.find((item) => item.id === zoomId) || null
 
   useModal(isCartOpen, onCloseCart)
   useEffect(() => () => clearTimeout(noticeTimer.current), [])
@@ -122,6 +127,20 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
                           {item.category}
                         </div>
                       )}
+
+                      {/* The whole picture opens the zoom view (a clear button over everything, so the badges do not get in the way) */}
+                      <button
+                        type="button"
+                        onClick={() => setZoomId(item.id)}
+                        aria-label={`Zoom in on the picture of ${item.name}`}
+                        className="absolute inset-0 z-10 cursor-zoom-in rounded-xl focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-500"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute z-20 bottom-1.5 right-1.5 sm:bottom-2.5 sm:right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/75 border border-neutral-700 text-neutral-300 group-hover:text-white group-hover:border-red-600 transition-colors flex items-center justify-center"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </span>
                     </div>
 
                     {/* Product Title */}
@@ -216,6 +235,20 @@ export default function MerchStore({ cart, onAddToCart, onUpdateCartQuantity, on
         )}
 
       </div>
+
+      {/* Zoom view of one product picture */}
+      <AnimatePresence>
+        {zoomItem && (
+          <ImageZoom
+            key="zoom"
+            src={zoomItem.image}
+            alt={zoomItem.name}
+            title={zoomItem.name}
+            caption={formatIdr(zoomItem.price)}
+            onClose={() => setZoomId(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Shopping Cart Drawer / Modal */}
       <AnimatePresence>

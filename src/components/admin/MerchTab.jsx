@@ -91,11 +91,11 @@ function MerchForm({ initial, title, submitLabel, canUpload, onDiscard, onSubmit
 
       <MediaField
         label="Product photo"
-        hint="Shown on the product card and in the cart. It is saved with the product."
+        hint="Shown on the product card and in the cart, and visitors can click it to zoom in on the design, so upload a large, sharp photo. It is saved with the product."
         folder="images/merch"
         value={item.image}
         fallback={fallback}
-        maxEdge={1200}
+        maxEdge={2400}
         compact
         canUpload={canUpload}
         onChange={(url) => setItem((prev) => ({ ...prev, image: url }))}
