@@ -292,6 +292,8 @@ export const BAND_CONTACT = {
 // `{count}` in musicIntro becomes "7 singles" (or "1 single") from the real list, and `{years}` in musicBadge
 // becomes the release years of those singles, like "(2021 - 2022)" (nothing when no single has a date).
 export const SITE_TEXTS = {
+  // the title on the browser tab (kept equal to the <title> in index.html, which is what link previews read)
+  pageTitle: 'PARANOID NOISE | Punk Rock & 90s Grunge Trio (Jakarta)',
   siteName: 'PARANOID NOISE',
   navTagline: "JAKARTA PUNK ROCK • 90'S GRUNGE",
   footerGenre: 'PUNK ROCK • SEATTLE SOUND GRUNGE TRIO',

@@ -6,6 +6,12 @@ import { SITE_TEXTS } from '../../data/bandData'
 // [key in config.texts, label, input or textarea, hint]
 const GROUPS = [
   {
+    title: 'Browser tab',
+    fields: [
+      ['pageTitle', 'Browser tab title', 'input', 'The title on the browser tab, in the history and in bookmarks. Leave empty to use the site name. Link previews (WhatsApp, Instagram and the like) cannot follow this: they read the wording that is built into the site.']
+    ]
+  },
+  {
     title: 'Top bar & footer',
     fields: [
       ['siteName', 'Site name', 'input', 'The name in the top bar, the footer and the copyright line. The big headline at the top of the home page is edited in Theme & Look.'],
@@ -55,7 +61,7 @@ export default function TextsTab({ texts, onSave }) {
     >
       <TabHeader
         title="EDIT SITE TEXTS"
-        text="The sentences around the content: the top bar, the footer, the heading of the Music section and the introduction under each section title. The band bio, the singles, gigs and products have their own tabs."
+        text="The sentences around the content: the browser tab title, the top bar, the footer, the heading of the Music section and the introduction under each section title. The band bio, the singles, gigs and products have their own tabs."
       />
 
       {GROUPS.map((group) => (

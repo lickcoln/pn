@@ -231,6 +231,12 @@ export function BandDataProvider({ children }) {
     if (icon && config.images.logo) icon.href = config.images.logo
   }, [config.images.logo])
 
+  // The browser tab title follows the admin's text (a tab cannot have an empty title, so an empty text uses the site name)
+  const { pageTitle, siteName } = config.texts
+  useEffect(() => {
+    document.title = pageTitle.trim() || siteName.trim() || SITE_TEXTS.pageTitle
+  }, [pageTitle, siteName])
+
   // Shared content from Supabase wins over local copies once the site_content table exists
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined
