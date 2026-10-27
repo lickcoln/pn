@@ -525,6 +525,8 @@ export default function AdminPortal() {
                       hero={config.hero}
                       updateTheme={updateTheme}
                       onSaveHero={saver(updateHero)}
+                      canUpload={canUpload}
+                      onDiscard={discardOldMedia}
                     />
                   </div>
 

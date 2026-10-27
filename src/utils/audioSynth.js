@@ -63,6 +63,12 @@ class AudioEngine {
     this.intervalId = null
     this.audioEl = null
     this.songUrl = ''
+    // A short sound effect (the stompbox sound, a member's signature sound) has its own <audio> element, so it
+    // never disturbs the song player; fxId says which one is playing right now
+    this.fxEl = null
+    this.fxId = null
+    this.fxUrl = ''
+    this.fxTimer = 0
     this.listeners = new Set()
   }
 
@@ -353,7 +359,7 @@ class AudioEngine {
     this.activeOscillators = []
   }
 
-  // Stops whatever is playing: the riff loop, or the song (rewound to the start)
+  // Stops whatever is playing: the riff loop, or the song (rewound to the start), or a sound effect
   stop() {
     this.isPlaying = false
     this.currentTrackId = null
@@ -361,6 +367,69 @@ class AudioEngine {
     if (this.audioEl) {
       this.audioEl.pause()
       this.audioEl.currentTime = 0
+    }
+    this.stopEffect()
+  }
+
+  ensureEffectElement() {
+    if (this.fxEl) return this.fxEl
+    const el = new Audio()
+    // Needed so the Web Audio graph may read the file (the storage server allows it)
+    el.crossOrigin = 'anonymous'
+    el.preload = 'auto'
+    el.addEventListener('ended', () => this.stopEffect())
+    el.addEventListener('error', () => this.stopEffect())
+    this.effectSource = this.ctx.createMediaElementSource(el)
+    this.effectSource.connect(this.pedalNode)
+    this.fxEl = el
+    return el
+  }
+
+  /**
+   * Play an uploaded sound once from the start (MP3 or WAV), through the same effects chain as the songs.
+   * `maxSeconds` cuts it off at that length. Starting another effect replaces the one that was playing.
+   * Rejects when the browser refuses to play it, so the caller can fall back to a synthesized sound.
+   */
+  async playEffect(id, url, { maxSeconds = 0 } = {}) {
+    this.init()
+    const el = this.ensureEffectElement()
+    this.stopEffect()
+    if (this.fxUrl !== url || el.error) {
+      this.fxUrl = url
+      el.src = url
+    }
+    el.currentTime = 0
+    this.fxId = id
+    try {
+      await el.play()
+    } catch (err) {
+      if (this.fxId === id) this.fxId = null
+      throw err
+    }
+    // it may have been stopped or replaced while it was loading
+    if (this.fxId !== id) {
+      el.pause()
+      return
+    }
+    this.emit({ type: 'effect', id, playing: true })
+    if (maxSeconds > 0) {
+      this.fxTimer = window.setTimeout(() => {
+        if (this.fxId === id) this.stopEffect()
+      }, maxSeconds * 1000)
+    }
+  }
+
+  stopEffect() {
+    clearTimeout(this.fxTimer)
+    this.fxTimer = 0
+    if (this.fxEl) {
+      this.fxEl.pause()
+      this.fxEl.currentTime = 0
+    }
+    if (this.fxId !== null) {
+      const id = this.fxId
+      this.fxId = null
+      this.emit({ type: 'effect', id, playing: false })
     }
   }
 
@@ -372,6 +441,7 @@ class AudioEngine {
 
   /** True while something can actually be heard: a riff is looping, or the song element is running (not paused, not ended). */
   isSounding() {
+    if (this.fxId !== null && this.fxEl && !this.fxEl.paused) return true
     if (!this.isPlaying) return false
     if (this.mode !== 'song') return true
     return Boolean(this.audioEl) && !this.audioEl.paused && !this.audioEl.ended

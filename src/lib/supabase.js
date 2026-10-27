@@ -261,8 +261,12 @@ export const listTicketRsvps = () => listRows('ticket_rsvps')
 
 export const MEDIA_BUCKET = 'site-media'
 
-function describeStorageError(err) {
+function describeStorageError(err, { wav = false } = {}) {
   const text = `${err?.message || ''} ${err?.statusCode || ''}`
+  // The bucket was created before WAV was allowed: running the current supabase-media.sql again adds it
+  if (wav && /mime type|\b415\b/i.test(text)) {
+    return 'The storage bucket does not accept WAV files yet. Run the current supabase-media.sql in the Supabase SQL Editor (it adds WAV), or upload an MP3 instead.'
+  }
   if (/bucket not found/i.test(text)) {
     return "The 'site-media' storage bucket does not exist yet. Run supabase-media.sql in the Supabase SQL Editor."
   }
@@ -283,10 +287,15 @@ export async function uploadMedia(folder, file) {
   if (!isSupabaseConfigured || !supabase) return { success: false, error: 'Supabase is not configured.' }
 
   const isMp3 = /\.mp3$/i.test(file.name)
+  const isWav = /\.wav$/i.test(file.name)
   const path = `${folder}/${Date.now()}-${safeFileName(file.name)}`
-  // The storage client sends a file with the type the browser detected (some report MP3 as
-  // audio/mp3 or nothing at all), and the bucket only accepts audio/mpeg for songs
-  const body = isMp3 && file.type !== 'audio/mpeg' ? new File([file], file.name, { type: 'audio/mpeg' }) : file
+  // The storage client sends a file with the type the browser detected (some report MP3 as audio/mp3 and a
+  // WAV as audio/x-wav or nothing at all), and the bucket only knows audio/mpeg and audio/wav
+  const body = isMp3 && file.type !== 'audio/mpeg'
+    ? new File([file], file.name, { type: 'audio/mpeg' })
+    : isWav && file.type !== 'audio/wav'
+      ? new File([file], file.name, { type: 'audio/wav' })
+      : file
 
   try {
     const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, body, {
@@ -299,7 +308,7 @@ export async function uploadMedia(folder, file) {
     const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path)
     return { success: true, url: data.publicUrl, path }
   } catch (err) {
-    return { success: false, error: describeStorageError(err) }
+    return { success: false, error: describeStorageError(err, { wav: isWav }) }
   }
 }
 

@@ -3,6 +3,7 @@ import { Save } from 'lucide-react'
 import { AdminField, PrimaryButton, TabHeader } from './ui'
 import MediaField from '../MediaField'
 import { BAND_MEMBERS } from '../../data/bandData'
+import { MEMBER_SOUND_MAX_SECONDS } from '../../lib/media'
 
 export default function MembersTab({ members, onSave, canUpload, onDiscard }) {
   const [list, setList] = useState(members)
@@ -10,11 +11,16 @@ export default function MembersTab({ members, onSave, canUpload, onDiscard }) {
   const change = (index, key, value) => setList((prev) => prev.map((member, i) => (i === index ? { ...member, [key]: value } : member)))
   const bind = (index, key) => ({ value: list[index][key] ?? '', onChange: (e) => change(index, key, e.target.value) })
 
-  // An uploaded photo is on the server already, so it saves this form right away
+  // An uploaded photo or sound is on the server already, so it saves this form right away
   const handlePhoto = (id, url) => {
     const next = list.map((member) => (member.id === id ? { ...member, image: url } : member))
     setList(next)
     onSave(next)
+  }
+  const handleSound = (id, url, name) => {
+    const next = list.map((member) => (member.id === id ? { ...member, soundUrl: url, soundName: name } : member))
+    setList(next)
+    onSave(next, url ? 'Signature sound updated!' : 'Signature sound removed!')
   }
 
   return (
@@ -27,7 +33,7 @@ export default function MembersTab({ members, onSave, canUpload, onDiscard }) {
     >
       <TabHeader
         title="EDIT BAND MEMBER INFORMATION"
-        text="Edit each member's name, role, gear, description, and photo."
+        text="Edit each member's name, role, gear, description, photo and signature sound."
       />
 
       <div className="space-y-6">
@@ -53,6 +59,20 @@ export default function MembersTab({ members, onSave, canUpload, onDiscard }) {
               compact
               canUpload={canUpload}
               onChange={(url) => handlePhoto(member.id, url)}
+              onDiscard={onDiscard}
+            />
+
+            <MediaField
+              label={`Signature sound (up to ${MEMBER_SOUND_MAX_SECONDS} seconds)`}
+              hint={`An MP3 of this member's instrument, at most ${MEMBER_SOUND_MAX_SECONDS} seconds long. Visitors hear it when they press the speaker button on this member's card. Uploading saves this form.`}
+              kind="audio"
+              maxSeconds={MEMBER_SOUND_MAX_SECONDS}
+              emptyText="No sound yet. The site plays a short synthesized guitar sound instead."
+              folder={`audio/members/${member.id}`}
+              value={member.soundUrl || ''}
+              fileName={member.soundName}
+              canUpload={canUpload}
+              onChange={(url, meta) => handleSound(member.id, url, meta?.name || '')}
               onDiscard={onDiscard}
             />
 

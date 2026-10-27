@@ -1,5 +1,6 @@
--- Paranoid Noise: uploads for the admin portal (photos and MP3 songs)
+-- Paranoid Noise: uploads for the admin portal (photos, MP3 songs and the WAV or MP3 stompbox sound)
 -- Run once in the Supabase SQL Editor, AFTER supabase-admin.sql (it uses public.is_admin()). Safe to run again.
+-- If you ran an older version of this file, run it again: the newer one also allows WAV files.
 --
 -- Creates a public bucket called "site-media". Everyone can download files from it (the website
 -- needs that), but only the admin can upload, replace or delete them.
@@ -13,7 +14,7 @@ VALUES (
   'site-media',
   true,
   26214400, -- 25 MB per file
-  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'audio/mpeg']
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/wave']
 )
 ON CONFLICT (id) DO UPDATE
 SET public = EXCLUDED.public,
@@ -50,3 +51,4 @@ CREATE POLICY "Admin can delete media"
   FOR DELETE
   TO authenticated
   USING (bucket_id = 'site-media' AND (SELECT public.is_admin()));
+  

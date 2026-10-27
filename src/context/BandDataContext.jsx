@@ -104,7 +104,10 @@ const DEFAULT_CONFIG = {
   hero: {
     title: 'PARANOID NOISE',
     tagline: 'RAW ENERGY. EXPLOSIVE CHAOS. UNAPOLOGETIC ROCK.',
-    sceneBadge: 'JAKARTA UNDERGROUND • EST. 2021'
+    sceneBadge: 'JAKARTA UNDERGROUND • EST. 2021',
+    // the sound the stompbox logo plays when it is clicked (an uploaded MP3 or WAV); empty = the synthesized riff
+    stompSoundUrl: '',
+    stompSoundName: ''
   },
   bio: BAND_BIO,
   texts: SITE_TEXTS,

@@ -58,6 +58,8 @@ export function sanitizeConfig(config, defaults, themePresetIds) {
       ...m,
       name: text(m.name),
       role: text(m.role),
+      soundUrl: text(m.soundUrl),
+      soundName: text(m.soundName),
       image: picture(m.image),
       fallbackImage: text(m.fallbackImage),
       gear: text(m.gear),

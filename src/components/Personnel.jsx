@@ -1,14 +1,37 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Volume2, Flame } from 'lucide-react'
 import { useBandData } from '../context/BandDataContext'
 import { audioEngine } from '../utils/audioSynth'
+import { MEMBER_SOUND_MAX_SECONDS } from '../lib/media'
 
 export default function Personnel() {
   const { config, currentTheme } = useBandData()
   const { members } = config
+  // which member's signature sound is playing right now (for the button's lit-up state)
+  const [playingFx, setPlayingFx] = useState(null)
 
-  const handleTestInstrument = (id) => {
+  useEffect(() => audioEngine.subscribe((event) => {
+    if (event.type !== 'effect') return
+    setPlayingFx((current) => (event.playing ? event.id : current === event.id ? null : current))
+  }), [])
+
+  // The speaker button on a card plays the member's signature sound, an MP3 uploaded in the admin (cut off at five
+  // seconds); a second press stops it. Without one, or when it cannot be played, a short synthesized guitar sound plays.
+  const handleTestInstrument = (member) => {
+    const fxId = `member:${member.id}`
+    if (member.soundUrl) {
+      if (audioEngine.fxId === fxId) {
+        audioEngine.stopEffect()
+        return
+      }
+      audioEngine.playEffect(fxId, member.soundUrl, { maxSeconds: MEMBER_SOUND_MAX_SECONDS }).catch(() => playSynthSound(member.id))
+      return
+    }
+    playSynthSound(member.id)
+  }
+
+  const playSynthSound = (id) => {
     audioEngine.playFootswitchClick()
     if (id === 'arief') {
       audioEngine.playRockChord(146.83, 0.4)
@@ -131,12 +154,17 @@ export default function Personnel() {
                         {member.role}
                       </span>
                       <button
-                        onClick={() => handleTestInstrument(member.id)}
+                        onClick={() => handleTestInstrument(member)}
                         aria-label={`Hear ${member.name}'s instrument`}
+                        aria-pressed={playingFx === `member:${member.id}`}
                         title={`Hear ${member.name}'s instrument`}
                         className="p-2 sm:p-1.5 rounded-md bg-neutral-900 border border-neutral-700 hover:border-white text-white transition-colors cursor-pointer"
+                        style={playingFx === `member:${member.id}` ? { borderColor: currentTheme.primaryColor } : undefined}
                       >
-                        <Volume2 className="w-3.5 h-3.5" style={{ color: currentTheme.primaryColor }} />
+                        <Volume2
+                          className={`w-3.5 h-3.5 ${playingFx === `member:${member.id}` ? 'animate-pulse' : ''}`}
+                          style={{ color: currentTheme.primaryColor }}
+                        />
                       </button>
                     </div>
                   </div>

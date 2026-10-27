@@ -1,12 +1,15 @@
 import React, { useRef, useState } from 'react'
 import { Upload, RotateCcw, Trash2, LoaderCircle, AlertTriangle, ImageOff, Link2, Music } from 'lucide-react'
 import { uploadMedia } from '../lib/supabase'
-import { prepareImage, validateMediaFile } from '../lib/media'
+import { prepareImage, validateAudioLength, validateMediaFile } from '../lib/media'
 
 /**
  * One image (or one MP3) in the admin portal: a preview, an upload button, and a box to paste a URL.
  * Uploads go to the public site-media bucket, so they need the shared server mode and an admin
  * session (canUpload); without them the URL box still works.
+ *
+ * For sounds: `wav` also accepts WAV files, `maxSeconds` rejects a longer file before it is uploaded, and
+ * `emptyText` is what the field says while no file is chosen.
  *
  * onChange(url, { name }) is called with the new value. onDiscard(oldUrl) lets the parent clean up
  * the file that was replaced.
@@ -20,6 +23,9 @@ export default function MediaField({
   fallback = '',
   maxEdge = 1600,
   fileName = '',
+  wav = false,
+  maxSeconds = 0,
+  emptyText = 'No MP3 yet. The site plays a guitar riff preview instead.',
   canUpload,
   onChange,
   onDiscard,
@@ -47,14 +53,15 @@ export default function MediaField({
     if (!file) return
 
     setError('')
-    const problem = validateMediaFile(file, kind)
-    if (problem) {
-      setError(problem)
-      return
-    }
-
+    let problem = validateMediaFile(file, kind, { wav })
     setBusy(true)
     try {
+      // a short-clip field checks the length first, so nothing too long ever reaches the server
+      if (!problem && isAudio && maxSeconds) problem = await validateAudioLength(file, maxSeconds)
+      if (problem) {
+        setError(problem)
+        return
+      }
       const prepared = isAudio ? file : await prepareImage(file, { maxEdge })
       const result = await uploadMedia(folder, prepared)
       if (result.success) change(result.url, { name: file.name })
@@ -91,14 +98,14 @@ export default function MediaField({
               <>
                 <div className="flex items-center gap-2 text-[11px] font-tech text-neutral-300">
                   <Music className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                  <span className="truncate">{fileName || 'MP3 uploaded'}</span>
+                  <span className="truncate">{fileName || (wav ? 'Sound uploaded' : 'MP3 uploaded')}</span>
                 </div>
                 <audio controls preload="none" src={value} className="w-full h-9" />
               </>
             ) : (
               <div className="flex items-center gap-2 text-[11px] font-tech text-neutral-500">
                 <Music className="w-3.5 h-3.5 shrink-0" />
-                <span>No MP3 yet. The site plays a guitar riff preview instead.</span>
+                <span>{emptyText}</span>
               </div>
             )}
           </div>
@@ -127,12 +134,12 @@ export default function MediaField({
             className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-tech font-bold uppercase tracking-wider flex items-center gap-1.5"
           >
             {busy ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            {busy ? 'Uploading...' : isAudio ? (value ? 'Replace MP3' : 'Upload MP3') : 'Upload photo'}
+            {busy ? 'Uploading...' : isAudio ? `${value ? 'Replace' : 'Upload'} ${wav ? 'sound' : 'MP3'}` : 'Upload photo'}
           </button>
           <input
             ref={fileInput}
             type="file"
-            accept={isAudio ? '.mp3,audio/mpeg' : 'image/jpeg,image/png,image/webp,image/gif'}
+            accept={isAudio ? (wav ? '.mp3,.wav,audio/mpeg,audio/wav,audio/x-wav' : '.mp3,audio/mpeg') : 'image/jpeg,image/png,image/webp,image/gif'}
             onChange={handleFile}
             className="hidden"
             aria-label={`${label}: choose a file`}
@@ -180,7 +187,7 @@ export default function MediaField({
                 applyUrl()
               }
             }}
-            placeholder={isAudio ? 'https://example.com/song.mp3' : 'https://example.com/photo.jpg'}
+            placeholder={isAudio ? `https://example.com/${wav ? 'sound.wav' : 'song.mp3'}` : 'https://example.com/photo.jpg'}
             className="grow min-w-0 px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 focus:border-red-600 focus:outline-none text-xs font-tech text-white"
           />
           <button

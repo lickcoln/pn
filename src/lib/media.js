@@ -10,17 +10,55 @@ const SKIP_SHRINK_BELOW_BYTES = 400 * 1024
 
 const mb = (bytes) => (bytes / (1024 * 1024)).toFixed(1)
 
-/** Returns an error message, or '' when the file can be uploaded as kind 'image' or 'audio'. */
-export function validateMediaFile(file, kind) {
+// A member's signature sound is a short clip: at most this long (it is also cut off at this length when it plays)
+export const MEMBER_SOUND_MAX_SECONDS = 5
+// An encoder pads a clip by a few hundredths of a second, so a clip cut to exactly 5 seconds still reads as 5.0x
+const DURATION_TOLERANCE_SECONDS = 0.15
+
+/** Returns an error message, or '' when the file can be uploaded as kind 'image' or 'audio' (an MP3, or a WAV too when `wav` is set). */
+export function validateMediaFile(file, kind, { wav = false } = {}) {
   if (!file) return 'No file selected.'
   if (file.size > MAX_UPLOAD_BYTES) {
     return `This file is ${mb(file.size)} MB, the limit is ${mb(MAX_UPLOAD_BYTES)} MB.`
   }
   if (kind === 'audio') {
     const isMp3 = file.type === 'audio/mpeg' || file.type === 'audio/mp3' || /\.mp3$/i.test(file.name)
-    return isMp3 ? '' : 'Only MP3 files can be used for songs.'
+    const isWav = ['audio/wav', 'audio/x-wav', 'audio/wave', 'audio/vnd.wave'].includes(file.type) || /\.wav$/i.test(file.name)
+    if (isMp3 || (wav && isWav)) return ''
+    return wav ? 'Use an MP3 or a WAV file.' : 'Only MP3 files can be used here.'
   }
   return IMAGE_TYPES.includes(file.type) ? '' : 'Use a JPG, PNG, WebP or GIF image.'
+}
+
+/** How long an audio file plays, in seconds, read from the file itself; NaN when the browser cannot read it. */
+export function readAudioDuration(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const el = new Audio()
+    let timer = 0
+    const done = (seconds) => {
+      clearTimeout(timer)
+      el.removeAttribute('src')
+      el.load()
+      URL.revokeObjectURL(url)
+      resolve(seconds)
+    }
+    timer = window.setTimeout(() => done(NaN), 10000)
+    el.preload = 'metadata'
+    el.onloadedmetadata = () => done(Number.isFinite(el.duration) ? el.duration : NaN)
+    el.onerror = () => done(NaN)
+    el.src = url
+  })
+}
+
+/** Returns an error message, or '' when the audio file is no longer than `maxSeconds`. */
+export async function validateAudioLength(file, maxSeconds) {
+  const seconds = await readAudioDuration(file)
+  if (!Number.isFinite(seconds)) return 'This file could not be read as audio. Try exporting it as an MP3 again.'
+  if (seconds > maxSeconds + DURATION_TOLERANCE_SECONDS) {
+    return `This sound is ${seconds.toFixed(1)} seconds long, the limit is ${maxSeconds} seconds. Trim it and upload it again.`
+  }
+  return ''
 }
 
 export function safeFileName(name) {

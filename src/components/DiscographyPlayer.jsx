@@ -622,12 +622,6 @@ export default function DiscographyPlayer({ playRequest, distortionActive, onTog
                     {track.releaseDate}
                   </div>
 
-                  {hasSong && (
-                    <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 bg-red-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-tech font-bold uppercase tracking-wider text-white">
-                      MP3
-                    </div>
-                  )}
-
                   <div className="hidden sm:block absolute bottom-2.5 right-2.5 text-[10px] font-mono text-neutral-300 bg-black/70 px-2 py-0.5 rounded">
                     SINGLE #{idx + 1}
                   </div>

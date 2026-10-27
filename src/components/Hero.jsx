@@ -7,26 +7,47 @@ import { useBandData } from '../context/BandDataContext'
 
 const STOMP_RIFF_ID = 'featured'
 const STOMP_RIFF_MS = 8000
+const STOMP_FX_ID = 'stompbox'
 
 export default function Hero({ onPlayFeaturedTrack }) {
   const { config, currentTheme } = useBandData()
   const { hero, members } = config
   const stompTimer = useRef(0)
+  const customSound = Boolean(hero.stompSoundUrl)
 
   useEffect(() => () => clearTimeout(stompTimer.current), [])
 
-  // The riff loops until something stops it, so the logo works as a switch and the riff also ends by itself
-  const handleStomp = () => {
-    audioEngine.playFootswitchClick()
-    clearTimeout(stompTimer.current)
-    if (audioEngine.isPlaying && audioEngine.currentTrackId === STOMP_RIFF_ID) {
-      audioEngine.stop()
-      return
-    }
+  const playStompRiff = () => {
     audioEngine.playTrackRiff(STOMP_RIFF_ID, 'grunge_intro')
     stompTimer.current = window.setTimeout(() => {
       if (audioEngine.currentTrackId === STOMP_RIFF_ID) audioEngine.stop()
     }, STOMP_RIFF_MS)
+  }
+
+  // The logo works as a switch. With a sound uploaded in the admin (an MP3 or a WAV) it plays that sound to its end
+  // or until the next click; otherwise it loops a synthesized riff, which also ends by itself after a few seconds.
+  const handleStomp = async () => {
+    audioEngine.playFootswitchClick()
+    clearTimeout(stompTimer.current)
+    if (customSound) {
+      if (audioEngine.fxId === STOMP_FX_ID) {
+        audioEngine.stopEffect()
+        return
+      }
+      audioEngine.stop()
+      try {
+        await audioEngine.playEffect(STOMP_FX_ID, hero.stompSoundUrl)
+      } catch {
+        // a file that cannot be played (removed, blocked, damaged) must not leave the logo silent
+        playStompRiff()
+      }
+      return
+    }
+    if (audioEngine.isPlaying && audioEngine.currentTrackId === STOMP_RIFF_ID) {
+      audioEngine.stop()
+      return
+    }
+    playStompRiff()
   }
 
   const glitchClass = config.theme.glitchIntensity === 'extreme'
@@ -89,7 +110,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
           className="relative mb-6 group cursor-pointer"
           role="button"
           tabIndex={0}
-          aria-label="Play or stop a guitar riff"
+          aria-label={customSound ? 'Play or stop the stompbox sound' : 'Play or stop a guitar riff'}
           onClick={handleStomp}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -97,7 +118,7 @@ export default function Hero({ onPlayFeaturedTrack }) {
               handleStomp()
             }
           }}
-          title="Click the stompbox to play a guitar riff (click again to stop it)"
+          title={customSound ? 'Click the stompbox to play its sound (click again to stop it)' : 'Click the stompbox to play a guitar riff (click again to stop it)'}
         >
           {/* Backlight glow */}
           <div

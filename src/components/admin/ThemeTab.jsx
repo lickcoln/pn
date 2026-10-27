@@ -1,13 +1,21 @@
 import React, { useState } from 'react'
 import { Save } from 'lucide-react'
 import { PrimaryButton } from './ui'
+import MediaField from '../MediaField'
 
-export default function ThemeTab({ theme, themePresets, hero, updateTheme, onSaveHero }) {
+export default function ThemeTab({ theme, themePresets, hero, updateTheme, onSaveHero, canUpload, onDiscard }) {
   const [heroForm, setHeroForm] = useState(hero)
 
   const handleSaveHero = (e) => {
     e.preventDefault()
     onSaveHero(heroForm, 'Hero headline & theme updated!')
+  }
+
+  // An uploaded sound is on the server already, so it saves this form right away
+  const handleStompSound = (url, name) => {
+    const next = { ...heroForm, stompSoundUrl: url, stompSoundName: name }
+    setHeroForm(next)
+    onSaveHero(next, url ? 'Stompbox sound updated!' : 'Stompbox sound removed!')
   }
 
   return (
@@ -129,6 +137,21 @@ export default function ThemeTab({ theme, themePresets, hero, updateTheme, onSav
 
         <PrimaryButton icon={Save}>Save Theme &amp; Hero Settings</PrimaryButton>
       </form>
+
+      {/* The sound of the stompbox logo on the home page */}
+      <MediaField
+        label="Stompbox sound (the logo on the home page)"
+        hint="An MP3 or WAV file, up to 25 MB. Visitors hear it when they click the stompbox logo and can click again to stop it. Uploading saves it right away."
+        kind="audio"
+        wav
+        emptyText="No sound yet. The logo plays a synthesized guitar riff instead."
+        folder="audio/stompbox"
+        value={heroForm.stompSoundUrl || ''}
+        fileName={heroForm.stompSoundName}
+        canUpload={canUpload}
+        onChange={(url, meta) => handleStompSound(url, meta?.name || '')}
+        onDiscard={onDiscard}
+      />
     </div>
   )
 }
