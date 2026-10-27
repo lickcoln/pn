@@ -135,7 +135,7 @@ export default function Footer() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Phones have no floating lock (it covered the page), so the admin signs in from here */}
+            {/* On a phone the admin can also sign in from here (the green dot in the corner does the same) */}
             <button
               onClick={requestAdminPortal}
               className="px-3 py-2 rounded-xl text-neutral-600 hover:text-neutral-300 transition-colors lg:hidden"

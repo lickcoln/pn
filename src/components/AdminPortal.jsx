@@ -131,8 +131,8 @@ export default function AdminPortal() {
   // accidental Escape would throw away what was typed.
   useModal(showDashboard && isAdmin, () => {})
 
-  // Keyboard shortcut Ctrl + Shift + A, and the "Admin login" link in the footer (which is how a phone gets in,
-  // because the floating lock is hidden there so it cannot cover the page)
+  // Keyboard shortcut Ctrl + Shift + A, and the "Admin login" link in the footer (a second way in for a phone,
+  // next to the green dot in the corner)
   useEffect(() => {
     const toggleAdmin = () => {
       if (isAdmin) {
@@ -209,8 +209,9 @@ export default function AdminPortal() {
 
   return (
     <>
-      {/* 1. Subtle & Hidden Access Button in Bottom-Right Corner */}
-      <div className="fixed bottom-[4.75rem] lg:bottom-3 right-3 z-40 flex items-center gap-2">
+      {/* 1. Access button in the bottom-right corner: a faint lock on large screens, a small green dot on a phone
+          (just above the tab bar, whose height grows with the safe area of an iPhone) */}
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-3 right-3 z-40 flex items-center gap-2">
         {isAdmin && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
@@ -232,15 +233,28 @@ export default function AdminPortal() {
               setShowLoginModal(true)
             }
           }}
-          className={`p-2 rounded-full border transition-all duration-300 cursor-pointer ${
+          className={`rounded-full transition-all duration-300 cursor-pointer ${
             isAdmin
-              ? 'bg-neutral-900 border-red-600 text-red-400 opacity-90 hover:opacity-100 shadow-md shadow-red-950/50'
-              : 'hidden lg:block bg-black/40 border-neutral-800 text-neutral-600 hover:text-neutral-300 opacity-30 hover:opacity-90'
+              ? 'p-2 border bg-neutral-900 border-red-600 text-red-400 opacity-90 hover:opacity-100 shadow-md shadow-red-950/50'
+              : 'flex items-center justify-center w-9 h-9 lg:w-auto lg:h-auto lg:p-2 lg:border lg:bg-black/40 lg:border-neutral-800 text-neutral-600 hover:text-neutral-300 lg:opacity-30 lg:hover:opacity-90'
           }`}
-          title={isAdmin ? 'Admin mode is on (click to open the panel)' : 'Hidden administrator access (PN)'}
+          title={isAdmin ? 'Admin mode is on (click to open the panel)' : 'Administrator access'}
           aria-label="Admin access"
         >
-          {isAdmin ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+          {isAdmin ? (
+            <Unlock className="w-4 h-4" />
+          ) : (
+            <>
+              <Lock className="hidden lg:block w-4 h-4" />
+              {/* the phone version: a plain green dot with a soft glow, easy to see on a dark page but only 12 px wide
+                  (the button around it is 36 px so a finger can hit it without covering much of the page) */}
+              <span
+                data-testid="admin-dot"
+                aria-hidden="true"
+                className="lg:hidden block w-3 h-3 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.22),0_0_10px_rgba(34,197,94,0.85)]"
+              />
+            </>
+          )}
         </button>
       </div>
 
