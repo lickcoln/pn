@@ -2,7 +2,6 @@ import React from 'react'
 import { ArrowUp, Phone, Mail } from 'lucide-react'
 import { SOCIAL_STYLES } from './socialStyles'
 import { formatWhatsApp, socialChannels, whatsappLink } from '../lib/contactInfo'
-import { requestAdminPortal } from '../lib/adminEvents'
 import { useBandData } from '../context/BandDataContext'
 
 const THIS_YEAR = new Date().getFullYear()
@@ -134,24 +133,14 @@ export default function Footer() {
             &copy; {THIS_YEAR} {texts.siteName}. All Rights Reserved. Built for the Indonesian Underground.
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* On a phone the admin can also sign in from here (the green dot in the corner does the same) */}
-            <button
-              onClick={requestAdminPortal}
-              className="px-3 py-2 rounded-xl text-neutral-600 hover:text-neutral-300 transition-colors lg:hidden"
-            >
-              Admin login
-            </button>
-
-            {/* Scroll To Top Button */}
-            <button
-              onClick={scrollToTop}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-red-600 text-neutral-300 hover:text-white transition-colors"
-            >
-              <span>BACK TO TOP</span>
-              <ArrowUp className="w-3.5 h-3.5 text-red-500" />
-            </button>
-          </div>
+          {/* Scroll To Top Button (centred under the text on a phone, at the right edge beside it on a wide screen) */}
+          <button
+            onClick={scrollToTop}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-red-600 text-neutral-300 hover:text-white transition-colors"
+          >
+            <span>BACK TO TOP</span>
+            <ArrowUp className="w-3.5 h-3.5 text-red-500" />
+          </button>
         </div>
 
       </div>

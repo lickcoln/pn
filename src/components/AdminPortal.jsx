@@ -27,7 +27,6 @@ import {
 } from 'lucide-react'
 import { useBandData } from '../context/BandDataContext'
 import { deleteMedia } from '../lib/supabase'
-import { OPEN_ADMIN_EVENT } from '../lib/adminEvents'
 import { useModal } from '../lib/useModal'
 import ThemeTab from './admin/ThemeTab'
 import ImagesTab from './admin/ImagesTab'
@@ -131,28 +130,20 @@ export default function AdminPortal() {
   // accidental Escape would throw away what was typed.
   useModal(showDashboard && isAdmin, () => {})
 
-  // Keyboard shortcut Ctrl + Shift + A, and the "Admin login" link in the footer (a second way in for a phone,
-  // next to the green dot in the corner)
+  // Keyboard shortcut Ctrl + Shift + A (a phone uses the green dot in the corner)
   useEffect(() => {
-    const toggleAdmin = () => {
-      if (isAdmin) {
-        setShowDashboard(prev => !prev)
-      } else {
-        setShowLoginModal(true)
-      }
-    }
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault()
-        toggleAdmin()
+        if (isAdmin) {
+          setShowDashboard(prev => !prev)
+        } else {
+          setShowLoginModal(true)
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener(OPEN_ADMIN_EVENT, toggleAdmin)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener(OPEN_ADMIN_EVENT, toggleAdmin)
-    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isAdmin])
 
   // Handle Login Authentication

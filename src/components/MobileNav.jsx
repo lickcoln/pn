@@ -88,7 +88,7 @@ export default function MobileNav() {
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           aria-label="Back to top"
-          className="lg:hidden fixed right-3 bottom-[8.25rem] z-40 w-11 h-11 rounded-full bg-neutral-900/95 border border-neutral-700 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+          className="lg:hidden fixed left-1/2 -translate-x-1/2 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 w-11 h-11 rounded-full bg-neutral-900/95 border border-neutral-700 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
         >
           <ArrowUp className="w-5 h-5" style={{ color: currentTheme.primaryColor }} />
         </button>
