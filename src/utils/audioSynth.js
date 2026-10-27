@@ -112,6 +112,14 @@ class AudioEngine {
       this.analyser = ctx.createAnalyser()
       this.analyser.fftSize = 64
 
+      // A finer spectrum for the equalizer strip at the bottom of the page: 64 points cannot tell a kick drum from
+      // a bass guitar, 1024 of them can. It listens next to the analyser above and passes nothing on.
+      this.spectrum = ctx.createAnalyser()
+      this.spectrum.fftSize = 2048
+      this.spectrum.smoothingTimeConstant = 0.5
+      this.spectrum.minDecibels = -90
+      this.spectrum.maxDecibels = -25
+
       this.masterGain = ctx.createGain()
       // A gentle limiter so an EQ boost cannot clip the speakers
       this.limiter = ctx.createDynamicsCompressor()
@@ -130,6 +138,7 @@ class AudioEngine {
       this.eq.bass.connect(this.eq.mid)
       this.eq.mid.connect(this.eq.treble)
       this.eq.treble.connect(this.analyser)
+      this.eq.treble.connect(this.spectrum)
       this.analyser.connect(this.masterGain)
       this.masterGain.connect(this.limiter)
       this.limiter.connect(ctx.destination)
@@ -359,6 +368,23 @@ class AudioEngine {
     if (this.analyser) {
       this.analyser.getByteFrequencyData(array)
     }
+  }
+
+  /** True while something can actually be heard: a riff is looping, or the song element is running (not paused, not ended). */
+  isSounding() {
+    if (!this.isPlaying) return false
+    if (this.mode !== 'song') return true
+    return Boolean(this.audioEl) && !this.audioEl.paused && !this.audioEl.ended
+  }
+
+  /**
+   * The fine spectrum (1024 values, 0-255, from 0 Hz to half the sample rate) for the equalizer strip. Returns the
+   * width of one value in Hz, or 0 when the audio engine has not started yet (browsers only start it from a click).
+   */
+  getSpectrum(array) {
+    if (!this.spectrum || !this.ctx) return 0
+    this.spectrum.getByteFrequencyData(array)
+    return this.ctx.sampleRate / this.spectrum.fftSize
   }
 }
 

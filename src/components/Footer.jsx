@@ -3,12 +3,13 @@ import { ArrowUp, Phone, Mail } from 'lucide-react'
 import { SOCIAL_STYLES } from './socialStyles'
 import { formatWhatsApp, socialChannels, whatsappLink } from '../lib/contactInfo'
 import { useBandData } from '../context/BandDataContext'
+import RockEqualizer from './RockEqualizer'
 
 const THIS_YEAR = new Date().getFullYear()
 
 export default function Footer() {
   const { config, currentTheme } = useBandData()
-  const { contact, members, texts } = config
+  const { contact, texts } = config
   const channels = socialChannels(contact)
 
   const scrollToTop = () => {
@@ -16,7 +17,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-black border-t border-neutral-900 py-10 sm:py-16 relative overflow-hidden">
+    <footer className="bg-black border-t border-neutral-900 pt-10 sm:pt-16 relative overflow-hidden">
       
       {/* Background Accent */}
       <div
@@ -51,11 +52,6 @@ export default function Footer() {
                 {texts.footerAbout}
               </p>
             )}
-
-            <div className="text-xs font-tech text-neutral-500">
-              <span className="text-neutral-300 font-bold">Lineup:</span>{' '}
-              {members.map(m => `${m.name} (${m.role})`).join(' • ')}
-            </div>
           </div>
 
           {/* Quick Nav Links (phones already have the tab bar at the bottom) */}
@@ -130,7 +126,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-tech text-neutral-500">
           <div>
-            &copy; {THIS_YEAR} {texts.siteName}. All Rights Reserved. Built for the Indonesian Underground.
+            &copy; {THIS_YEAR} {texts.siteName}. All Rights Reserved.
           </div>
 
           {/* Scroll To Top Button (centred under the text on a phone, at the right edge beside it on a wide screen) */}
@@ -143,6 +139,11 @@ export default function Footer() {
           </button>
         </div>
 
+      </div>
+
+      {/* The equalizer strip: it moves with the music, and plays a punk beat of its own when nothing is playing */}
+      <div className="relative z-10 mt-8 sm:mt-10">
+        <RockEqualizer />
       </div>
     </footer>
   )
