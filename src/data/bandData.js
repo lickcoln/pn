@@ -297,7 +297,7 @@ export const SITE_TEXTS = {
   // the card that WhatsApp, Instagram, Facebook, X... show for a link to the website; middleware.js writes these
   // into the HTML (keep the defaults equal to og:title and og:description in index.html)
   shareTitle: 'PARANOID NOISE - Official Band Website',
-  shareDescription: 'Raw Punk Rock & 90s Seattle Grunge Trio from Jakarta, Indonesia. Official singles, gig schedules, merch, and booking.',
+  shareDescription: "Raw Punk Rock & 90's Rough Distortion Trio from Jakarta, Indonesia. Official Singles, Gig Schedules, Merch, and Booking",
   siteName: 'PARANOID NOISE',
   navTagline: "JAKARTA PUNK ROCK • 90'S GRUNGE",
   footerGenre: 'PUNK ROCK • SEATTLE SOUND GRUNGE TRIO',
