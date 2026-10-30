@@ -8,7 +8,14 @@ const GROUPS = [
   {
     title: 'Browser tab',
     fields: [
-      ['pageTitle', 'Browser tab title', 'input', 'The title on the browser tab, in the history and in bookmarks. Leave empty to use the site name. Link previews (WhatsApp, Instagram and the like) cannot follow this: they read the wording that is built into the site.']
+      ['pageTitle', 'Browser tab title', 'input', 'The title on the browser tab, in the history and in bookmarks, and the page title that search engines read. Leave empty to use the site name.']
+    ]
+  },
+  {
+    title: 'Link preview',
+    fields: [
+      ['shareTitle', 'Link preview title', 'input', 'The bold title on the card that appears when someone shares a link to the website (WhatsApp, Instagram, Facebook, X, Telegram...). Leave empty to use the original text.'],
+      ['shareDescription', 'Link preview description', 'textarea', 'The smaller text under that title. Leave empty to use the original text. New words reach new previews within about a minute, but the apps keep an old preview of a link for days: to see the new one at once, share the link with something added at the end, like paranoidnoise.com/?v=2. The picture on the card is a fixed file and cannot be changed here.']
     ]
   },
   {
@@ -61,7 +68,7 @@ export default function TextsTab({ texts, onSave }) {
     >
       <TabHeader
         title="EDIT SITE TEXTS"
-        text="The sentences around the content: the browser tab title, the top bar, the footer, the heading of the Music section and the introduction under each section title. The band bio, the singles, gigs and products have their own tabs."
+        text="The sentences around the content: the browser tab title, the link preview, the top bar, the footer, the heading of the Music section and the introduction under each section title. The band bio, the singles, gigs and products have their own tabs."
       />
 
       {GROUPS.map((group) => (

@@ -294,6 +294,10 @@ export const BAND_CONTACT = {
 export const SITE_TEXTS = {
   // the title on the browser tab (kept equal to the <title> in index.html, which is what link previews read)
   pageTitle: 'PARANOID NOISE | Punk Rock & 90s Grunge Trio (Jakarta)',
+  // the card that WhatsApp, Instagram, Facebook, X... show for a link to the website; middleware.js writes these
+  // into the HTML (keep the defaults equal to og:title and og:description in index.html)
+  shareTitle: 'PARANOID NOISE - Official Band Website',
+  shareDescription: 'Raw Punk Rock & 90s Seattle Grunge Trio from Jakarta, Indonesia. Official singles, gig schedules, merch, and booking.',
   siteName: 'PARANOID NOISE',
   navTagline: "JAKARTA PUNK ROCK • 90'S GRUNGE",
   footerGenre: 'PUNK ROCK • SEATTLE SOUND GRUNGE TRIO',
